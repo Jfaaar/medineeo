@@ -120,8 +120,7 @@ END $$;
 --     default in any clinic (and disappear only if a clinic narrows its
 --     enabled_specialties or explicitly overrides off).
 --   • Specialty-specific clinical modules list only the specialties they fit:
---       - dentalChart        → dental
---       - vitals, problemList, bodyRegionChart → all non-dental
+--       - vitals, problemList, bodyRegionChart → all specialties
 --       - vaccinations       → general_practice, pediatrics
 --
 -- ON CONFLICT DO UPDATE makes this re-runnable as the catalog evolves.
@@ -143,9 +142,6 @@ VALUES
      'patients.view', 'clinical', 40),
 
   -- Specialty-specific clinical modules
-  ('dentalChart',     'Dental chart',      'Odontogram and tooth-level findings',
-     ARRAY['dental'],
-     'dentalChart.view', 'clinical', 50),
   ('vitals',          'Vital signs',       'BP, HR, temperature, SpO2, BMI tracking',
      ARRAY['general_practice','pediatrics','gynecology','cardiology','dermatology','ent','ophthalmology','orthopedics','psychiatry','other'],
      'clinical.view', 'clinical', 60),

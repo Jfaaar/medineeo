@@ -26,30 +26,8 @@ const clinicalNotesListQuerySchema = z.object({
   patientId: z.string().optional(),
 });
 
-// Dental chart entries
-const dentalChartCreateSchema = z.object({
-  patientId: z.string().min(1),
-  tooth: z.string().min(1),
-  surface: z.string().optional().nullable(),
-  finding: z.string().min(1),
-  notes: z.string().optional().nullable(),
-  recordedAt: z.string().optional(),
-  recordedBy: z.string().optional().nullable(),
-});
-
-const dentalChartUpdateSchema = dentalChartCreateSchema.partial();
-
-const dentalChartListQuerySchema = z.object({
-  page: z.coerce.number().int().min(0).optional().default(0),
-  pageSize: z.coerce.number().int().min(1).max(500).optional().default(200),
-  patientId: z.string().optional(),
-});
-
 module.exports = {
   clinicalNoteCreateSchema,
   clinicalNoteUpdateSchema,
   clinicalNotesListQuerySchema,
-  dentalChartCreateSchema,
-  dentalChartUpdateSchema,
-  dentalChartListQuerySchema,
 };

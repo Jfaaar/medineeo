@@ -33,14 +33,11 @@ import { RolesPage } from '../features/settings/RolesPage';
 import { SettingsLayout } from '../features/settings/SettingsLayout';
 
 import { ClinicalNotesRoute } from '../features/clinical/ClinicalNotesRoute';
-import { DentalChart } from '../features/clinical/DentalChart';
-import { DentalLabCasesPage } from '../features/dental/DentalLabCasesPage';
-import { PerioChartPage } from '../features/dental/PerioChartPage';
-import { EndoRecordsPage } from '../features/dental/EndoRecordsPage';
-import { OrthoModulePage } from '../features/dental/OrthoModulePage';
 import { TreatmentPlanPage } from '../features/treatments/TreatmentPlanPage';
 import { InsuranceTab } from '../features/insurance/InsuranceTab';
 import { PrescriptionEditor } from '../features/prescriptions/PrescriptionEditor';
+import { ReferralsPage } from '../features/referrals/ReferralsPage';
+import { CertificatesPage } from '../features/certificates/CertificatesPage';
 
 import { BackofficeSidebar } from '../features/backoffice/BackofficeSidebar';
 import { ClinicsPage } from '../features/backoffice/ClinicsPage';
@@ -176,31 +173,6 @@ const AppRoutes: React.FC = () => (
             element={<PatientScopedRoute Component={ClinicalNotesRoute} />}
           />
         </Route>
-        <Route element={<ProtectedRoute permission="dentalChart.view" feature="dentalChart" />}>
-          <Route
-            path="patients/:patientId/dental-chart"
-            element={<PatientScopedRoute Component={DentalChart} />}
-          />
-          <Route path="dental/lab-cases" element={<DentalLabCasesPage />} />
-        </Route>
-        <Route element={<ProtectedRoute permission="dentalChart.view" feature="perioChart" />}>
-          <Route
-            path="patients/:patientId/perio"
-            element={<PatientScopedRoute Component={PerioChartPage} />}
-          />
-        </Route>
-        <Route element={<ProtectedRoute permission="clinical.view" feature="endoChart" />}>
-          <Route
-            path="patients/:patientId/endo"
-            element={<PatientScopedRoute Component={EndoRecordsPage} />}
-          />
-        </Route>
-        <Route element={<ProtectedRoute permission="clinical.view" feature="orthoModule" />}>
-          <Route
-            path="patients/:patientId/ortho"
-            element={<PatientScopedRoute Component={OrthoModulePage} />}
-          />
-        </Route>
         <Route element={<ProtectedRoute permission="insurance.view" feature="insurance" />}>
           <Route
             path="patients/:patientId/insurance"
@@ -223,6 +195,12 @@ const AppRoutes: React.FC = () => (
         </Route>
         <Route element={<ProtectedRoute permission="prescriptions.view" feature="prescriptions" />}>
           <Route path="prescriptions" element={<PrescriptionEditor />} />
+        </Route>
+        <Route element={<ProtectedRoute permission="referrals.view" feature="referrals" />}>
+          <Route path="referrals" element={<ReferralsPage />} />
+        </Route>
+        <Route element={<ProtectedRoute permission="certificates.view" feature="certificates" />}>
+          <Route path="certificates" element={<CertificatesPage />} />
         </Route>
 
         <Route path="team" element={<TeamPage />} />

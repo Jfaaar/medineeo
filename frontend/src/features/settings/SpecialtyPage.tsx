@@ -110,7 +110,7 @@ export const SpecialtyPage: React.FC = () => {
           <p className="text-surface-500">
             {t(
               'specialtyDescription',
-              'Configure which specialties this clinic provides. Specialty-specific features (dental chart, body chart, etc.) appear based on this selection.',
+              'Configure which specialties this clinic provides. Specialty-specific features (body chart, growth charts, etc.) appear based on this selection.',
             )}
           </p>
         </div>

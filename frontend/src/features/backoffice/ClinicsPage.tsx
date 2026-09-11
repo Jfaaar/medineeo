@@ -140,7 +140,7 @@ export const ClinicsPage: React.FC = () => {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <Input label="Clinic Name *" required value={name}
-                                    onChange={(e) => setName(e.target.value)} placeholder="Dental Care Center" />
+                                    onChange={(e) => setName(e.target.value)} placeholder="Riverside Medical Center" />
                                 <Input label="Phone" value={phone}
                                     onChange={(e) => setPhone(e.target.value)} placeholder="+1 234 567 8900" />
                             </div>

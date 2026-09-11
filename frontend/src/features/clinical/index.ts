@@ -6,12 +6,8 @@ export {
   useUpdateClinicalNoteMutation,
   useSignClinicalNoteMutation,
   useDeleteClinicalNoteMutation,
-  useListDentalChartQuery,
-  useCreateDentalChartEntryMutation,
-  useUpdateDentalChartEntryMutation,
-  useDeleteDentalChartEntryMutation,
 } from './api/clinicalApi';
-export type { ClinicalNote, DentalChartEntry } from './api/clinicalApi';
+export type { ClinicalNote } from './api/clinicalApi';
 
 export {
   medicalApi,

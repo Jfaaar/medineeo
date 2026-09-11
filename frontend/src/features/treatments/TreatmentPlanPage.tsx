@@ -579,8 +579,6 @@ const PlanDetail: React.FC<PlanDetailProps> = ({
               <thead className="text-[11px] uppercase text-surface-500 tracking-wider">
                 <tr className="text-left">
                   <th className="py-2 font-semibold">{t('description')}</th>
-                  <th className="py-2 font-semibold">{t('tooth')}</th>
-                  <th className="py-2 font-semibold">{t('surface' as any) || 'Surface'}</th>
                   <th className="py-2 font-semibold text-right">{t('price')}</th>
                   <th className="py-2 font-semibold text-right">{t('status' as any) || 'Status'}</th>
                   <th className="py-2"></th>
@@ -593,12 +591,6 @@ const PlanDetail: React.FC<PlanDetailProps> = ({
                     className="border-t border-surface-100 dark:border-surface-800"
                   >
                     <td className="py-2.5">{it.description}</td>
-                    <td className="py-2.5 text-surface-500 font-mono text-xs">
-                      {it.tooth ?? '—'}
-                    </td>
-                    <td className="py-2.5 text-surface-500 text-xs">
-                      {it.surface ?? '—'}
-                    </td>
                     <td className="py-2.5 text-right font-mono">{fmtMoney(it.price)}</td>
                     <td className="py-2.5 text-right">
                       <span
@@ -866,7 +858,7 @@ const EditPlanModal: React.FC<{
   );
 };
 
-const AddItemModal: React.FC<{
+export const AddItemModal: React.FC<{
   planId: string;
   onClose: () => void;
   onAdded: () => void;
@@ -888,8 +880,6 @@ const AddItemModal: React.FC<{
       await treatmentPlansService.addItem(planId, {
         description: item.description,
         price: Number(item.price) || 0,
-        tooth: item.tooth || undefined,
-        surface: item.surface || undefined,
       });
       onAdded();
     } catch (e) {
@@ -909,16 +899,6 @@ const AddItemModal: React.FC<{
           autoFocus
         />
         <div className="grid grid-cols-3 gap-3">
-          <Input
-            label={t('tooth')}
-            value={item.tooth ?? ''}
-            onChange={(e) => setItem({ ...item, tooth: e.target.value })}
-          />
-          <Input
-            label={t('surface' as any) || 'Surface'}
-            value={item.surface ?? ''}
-            onChange={(e) => setItem({ ...item, surface: e.target.value })}
-          />
           <Input
             label={t('price')}
             type="number"

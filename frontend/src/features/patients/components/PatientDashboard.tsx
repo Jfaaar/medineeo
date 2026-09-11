@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Patient, Appointment, Invoice, Treatment, Payment, Prescription } from '../../../types';
+import { Patient, Appointment, Invoice, Treatment, Payment, Prescription, Certificate, Referral } from '../../../types';
 import { Button } from '../../../components/ui/Button';
 import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
@@ -12,25 +12,25 @@ import {
   Plus, Archive, Stethoscope, Coins,
   CheckCircle, MessageCircle, Trash2, Undo2, Loader2, Search, Pencil,
   CreditCard, Printer, PlusCircle, Check, Pill,
-  FolderOpen, Braces
+  FolderOpen, FileText, Send, Eye
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../../shared/constants/routes';
-import { useFeatureAccessApi } from '../../settings/useFeatureAccess';
 import { useLanguage } from '../../language/LanguageContext';
 import { RadiologyGalleryModal } from './RadiologyGalleryModal';
 import { DocumentsTab } from './DocumentsTab';
 import { TreatmentFormModal } from './TreatmentFormModal';
-import { Odontogram } from './Odontogram';
 import { BodyRegionChart } from './BodyRegionChart';
 import { PaymentModal } from '../../invoices/components/PaymentModal';
 import { PrescriptionModal } from '../../prescriptions/PrescriptionModal';
 import { PrescriptionPrintView } from '../../prescriptions/components/PrescriptionPrintView';
+import { CertificateModal } from '../../certificates/CertificateModal';
+import { CertificatePrintView } from '../../certificates/components/CertificatePrintView';
+import { ReferralModal } from '../../referrals/ReferralModal';
+import { ReferralPrintView } from '../../referrals/components/ReferralPrintView';
+import { ReferralViewModal } from '../../referrals/components/ReferralViewModal';
 import { api } from '../../../lib/api';
 import { storage } from '../../../lib/storage';
 import { toastError } from '../../../lib/toast';
 import { list as listDocuments, type DocumentWithUrl } from '../../../lib/services/documents';
-import { useClinicSpecialty } from '../../settings/useClinicSpecialty';
 import { VitalsForm } from '../../clinical/VitalsForm';
 import { VitalsTimeline } from '../../clinical/VitalsTimeline';
 import { ProblemListPanel } from '../../clinical/ProblemListPanel';
@@ -57,6 +57,8 @@ type TabType =
   | 'financials'
   | 'radiology'
   | 'prescriptions'
+  | 'certificates'
+  | 'referrals'
   | 'documents'
   | 'vitals'
   | 'problems'
@@ -75,14 +77,6 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
   invoices
 }) => {
   const { t, language } = useLanguage();
-  const { has } = useClinicSpecialty();
-  const isDental = has('dental');
-  const navigate = useNavigate();
-  const featureApi = useFeatureAccessApi();
-  const perioAccess = featureApi.access('perioChart');
-  const endoAccess = featureApi.access('endoChart');
-  const orthoAccess = featureApi.access('orthoModule');
-  const showDentalLinks = perioAccess.enabled || endoAccess.enabled || orthoAccess.enabled;
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   
   // Global Patient Search State
@@ -94,6 +88,8 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
   const [radios, setRadios] = useState<DocumentWithUrl[]>([]);
   const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
   const [showRadioGallery, setShowRadioGallery] = useState(false);
 
   const refreshRadios = () => {
@@ -104,9 +100,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
   
   // Treatment Form State
   const [showTreatmentModal, setShowTreatmentModal] = useState(false);
-  const [selectedTooth, setSelectedTooth] = useState<string | null>(null);
-  const [selectedSurface, setSelectedSurface] = useState<string | undefined>(undefined);
-  
+
   // Invoice Form State
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [newInvoiceAmount, setNewInvoiceAmount] = useState('');
@@ -122,6 +116,18 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
   // Prescription Print State
   const [prescriptionToPrint, setPrescriptionToPrint] = useState<Prescription | null>(null);
+
+  // Certificate Modal
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+  // Certificate Print State
+  const [certificateToPrint, setCertificateToPrint] = useState<Certificate | null>(null);
+
+  // Referral Modal
+  const [showReferralModal, setShowReferralModal] = useState(false);
+  // Referral Print State
+  const [referralToPrint, setReferralToPrint] = useState<Referral | null>(null);
+  // Referral View (consult before printing)
+  const [referralToView, setReferralToView] = useState<Referral | null>(null);
 
   // Notes State
   const [notes, setNotes] = useState(patient.medicalHistory?.notes || '');
@@ -149,6 +155,8 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
     refreshRadios();
     api.treatments.list(patient.id).then(setTreatments);
     api.prescriptions.list(patient.id).then(setPrescriptions);
+    api.certificates.list(patient.id).then(setCertificates);
+    api.referrals.list(patient.id).then(setReferrals);
     // Initialize notes from patient prop
     setNotes(patient.medicalHistory?.notes || '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -238,6 +246,24 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
           setPrescriptions(prev => [newPrescription, ...prev]);
       } catch (e) {
           toastError(e, t('createPrescriptionFailed'));
+      }
+  };
+
+  const handleCreateCertificate = async (data: Omit<Certificate, 'id'>) => {
+      try {
+          const newCertificate = await api.certificates.create(data);
+          setCertificates(prev => [newCertificate, ...prev]);
+      } catch (e) {
+          toastError(e, t('createCertificateFailed'));
+      }
+  };
+
+  const handleCreateReferral = async (data: Omit<Referral, 'id'>) => {
+      try {
+          const newReferral = await api.referrals.create(data);
+          setReferrals(prev => [newReferral, ...prev]);
+      } catch (e) {
+          toastError(e, t('createReferralFailed'));
       }
   };
 
@@ -351,15 +377,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
       }
   };
 
-  const handleToothClick = (toothId: string, surface?: string) => {
-      setSelectedTooth(toothId);
-      setSelectedSurface(surface);
-      setShowTreatmentModal(true);
-  };
-
   const handleOpenTreatmentModal = () => {
-      setSelectedTooth(null);
-      setSelectedSurface(undefined);
       setShowTreatmentModal(true);
   }
 
@@ -376,17 +394,13 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
     { id: 'acts', label: t('treatments'), icon: Stethoscope },
     { id: 'appointments', label: t('schedule'), icon: Calendar },
     { id: 'prescriptions', label: t('prescriptions'), icon: Pill },
-    // Medical-MVP tabs surface for any non-dental specialty.
-    ...(has('general_practice') || !isDental
-      ? [
-          { id: 'vitals', label: t('vitals'), icon: Heart },
-          { id: 'problems', label: t('problems'), icon: ClipboardList },
-          { id: 'vaccinations', label: t('vaccinations'), icon: Syringe },
-        ]
-      : []),
+    { id: 'certificates', label: t('certificates'), icon: FileText },
+    { id: 'referrals', label: t('referrals'), icon: Send },
+    { id: 'vitals', label: t('vitals'), icon: Heart },
+    { id: 'problems', label: t('problems'), icon: ClipboardList },
+    { id: 'vaccinations', label: t('vaccinations'), icon: Syringe },
     { id: 'financials', label: t('billing'), icon: Receipt },
-    // Radiology stays for dental clinics; other specialties access imaging via Documents.
-    ...(isDental ? [{ id: 'radiology', label: t('radiologyGallery'), icon: ImageIcon }] : []),
+    { id: 'radiology', label: t('radiologyGallery'), icon: ImageIcon },
     { id: 'documents', label: t('documents'), icon: FolderOpen },
   ];
 
@@ -481,35 +495,6 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
 
                     {isMenuOpen && (
                         <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-surface-800 rounded-xl shadow-xl border border-surface-200 dark:border-surface-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                            {showDentalLinks && (
-                                <>
-                                    {perioAccess.enabled && perioAccess.can && (
-                                        <button
-                                            onClick={() => { navigate(ROUTES.app.patientPerio(patient.id)); setIsMenuOpen(false); }}
-                                            className="w-full flex items-center gap-2 px-4 py-3 text-sm text-surface-600 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors"
-                                        >
-                                            <Activity size={16}/> {t('perioChart')}
-                                        </button>
-                                    )}
-                                    {endoAccess.enabled && endoAccess.can && (
-                                        <button
-                                            onClick={() => { navigate(ROUTES.app.patientEndo(patient.id)); setIsMenuOpen(false); }}
-                                            className="w-full flex items-center gap-2 px-4 py-3 text-sm text-surface-600 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors"
-                                        >
-                                            <Stethoscope size={16}/> {t('endoRecords')}
-                                        </button>
-                                    )}
-                                    {orthoAccess.enabled && orthoAccess.can && (
-                                        <button
-                                            onClick={() => { navigate(ROUTES.app.patientOrtho(patient.id)); setIsMenuOpen(false); }}
-                                            className="w-full flex items-center gap-2 px-4 py-3 text-sm text-surface-600 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors"
-                                        >
-                                            <Braces size={16}/> {t('orthoTracking')}
-                                        </button>
-                                    )}
-                                    <div className="h-px bg-surface-100 dark:bg-surface-700 my-1" />
-                                </>
-                            )}
                             <button
                                 onClick={() => { handleToggleStatus(); setIsMenuOpen(false); }}
                                 className="w-full flex items-center gap-2 px-4 py-3 text-sm text-surface-600 dark:text-surface-300 hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors"
@@ -762,18 +747,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
             {/* TREATMENTS TAB */}
             {activeTab === 'acts' && (
                 <div className="space-y-6">
-                    {/* Anatomical chart — dental clinics see the odontogram, others get the body chart. */}
-                    {isDental ? (
-                        <div className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 p-6 shadow-sm">
-                            <h3 className="font-bold text-lg text-surface-900 dark:text-white mb-4">{t('dentalChartTitle')}</h3>
-                            <Odontogram
-                                treatments={treatments}
-                                onToothClick={handleToothClick}
-                            />
-                        </div>
-                    ) : (
-                        <BodyRegionChart patientId={patient.id} />
-                    )}
+                    <BodyRegionChart patientId={patient.id} />
 
                     <div className="space-y-4">
                         <div className="flex justify-between items-center">
@@ -786,7 +760,6 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
                                 <thead className="bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700">
                                     <tr>
                                         <th className="py-3 px-4 font-semibold text-surface-500">{t('date')}</th>
-                                        <th className="py-3 px-4 font-semibold text-surface-500">{t('tooth')}</th>
                                         <th className="py-3 px-4 font-semibold text-surface-500">{t('actDescription')}</th>
                                         <th className="py-3 px-4 font-semibold text-surface-500 text-right">{t('price')}</th>
                                         <th className="py-3 px-4 font-semibold text-surface-500 text-right">{t('status')}</th>
@@ -796,10 +769,6 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
                                     {treatments.length > 0 ? treatments.map(treatment => (
                                         <tr key={treatment.id} className="hover:bg-surface-50 dark:hover:bg-surface-700/50">
                                             <td className="py-3 px-4">{formatDate(new Date(treatment.date), language)}</td>
-                                            <td className="py-3 px-4 font-medium">
-                                                {treatment.tooth || '-'} 
-                                                {treatment.surface && <span className="text-xs text-surface-400 ml-1">({treatment.surface})</span>}
-                                            </td>
                                             <td className="py-3 px-4">{treatment.description}</td>
                                             <td className="py-3 px-4 text-right font-medium">{treatment.price} DH</td>
                                             <td className="py-3 px-4 text-right">
@@ -810,7 +779,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
                                             </td>
                                         </tr>
                                     )) : (
-                                        <tr><td colSpan={5} className="p-8 text-center text-surface-400 italic">{t('noTreatmentsFound')}</td></tr>
+                                        <tr><td colSpan={4} className="p-8 text-center text-surface-400 italic">{t('noTreatmentsFound')}</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -903,6 +872,130 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
                                     {pres.notes && (
                                         <div className="text-xs text-surface-500 italic bg-surface-50 dark:bg-surface-800 p-2 rounded mt-1">
                                             {pres.notes}
+                                        </div>
+                                    )}
+                                </Card>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* CERTIFICATES TAB */}
+            {activeTab === 'certificates' && (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <h3 className="font-bold text-lg text-surface-900 dark:text-white">{t('certificates')}</h3>
+                        <Button className="gap-2" onClick={() => setShowCertificateModal(true)}>
+                            <Plus size={16}/> {t('createCertificate')}
+                        </Button>
+                    </div>
+
+                    <div className="grid gap-4">
+                        {certificates.length === 0 ? (
+                            <div className="text-center p-8 border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-xl">
+                                <FileText size={32} className="mx-auto text-surface-300 mb-2" />
+                                <p className="text-surface-500">{t('noCertificatesFound')}</p>
+                            </div>
+                        ) : (
+                            certificates.map(cert => (
+                                <Card key={cert.id} className="p-4 flex flex-col gap-3 group hover:border-primary-200 dark:hover:border-primary-800 transition-colors">
+                                    <div className="flex justify-between items-start border-b border-surface-100 dark:border-surface-700 pb-2">
+                                        <div className="font-bold text-surface-900 dark:text-white flex items-center gap-2">
+                                            <Calendar size={14} className="text-surface-400" />
+                                            {cert.createdAt ? formatDate(new Date(cert.createdAt), language) : '—'}
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-6 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                                            onClick={() => setCertificateToPrint(cert)}
+                                        >
+                                            <Printer size={14} className="mr-1" /> {t('printCertificate')}
+                                        </Button>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="font-medium text-surface-900 dark:text-white">
+                                            {t(`certificateType_${cert.type}` as any)}
+                                        </span>
+                                        <span className="text-surface-500">
+                                            {cert.startDate && cert.endDate
+                                                ? `${formatDate(new Date(cert.startDate), language)} – ${formatDate(new Date(cert.endDate), language)}`
+                                                : cert.restDays ? `${cert.restDays} ${t('restDays').toLowerCase()}` : ''}
+                                        </span>
+                                    </div>
+                                    {cert.reason && (
+                                        <div className="text-xs text-surface-500 italic bg-surface-50 dark:bg-surface-800 p-2 rounded mt-1">
+                                            {cert.reason}
+                                        </div>
+                                    )}
+                                </Card>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* REFERRALS TAB */}
+            {activeTab === 'referrals' && (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <h3 className="font-bold text-lg text-surface-900 dark:text-white">{t('referrals')}</h3>
+                        <Button className="gap-2" onClick={() => setShowReferralModal(true)}>
+                            <Plus size={16}/> {t('createReferral')}
+                        </Button>
+                    </div>
+
+                    <div className="grid gap-4">
+                        {referrals.length === 0 ? (
+                            <div className="text-center p-8 border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-xl">
+                                <Send size={32} className="mx-auto text-surface-300 mb-2" />
+                                <p className="text-surface-500">{t('noReferralsFound')}</p>
+                            </div>
+                        ) : (
+                            referrals.map(ref => (
+                                <Card
+                                    key={ref.id}
+                                    className="p-4 flex flex-col gap-3 group hover:border-primary-200 dark:hover:border-primary-800 transition-colors cursor-pointer"
+                                    onClick={() => setReferralToView(ref)}
+                                >
+                                    <div className="flex justify-between items-start border-b border-surface-100 dark:border-surface-700 pb-2">
+                                        <div className="font-bold text-surface-900 dark:text-white flex items-center gap-2">
+                                            <Calendar size={14} className="text-surface-400" />
+                                            {ref.createdAt ? formatDate(new Date(ref.createdAt), language) : '—'}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-6 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800"
+                                                onClick={(e) => { e.stopPropagation(); setReferralToView(ref); }}
+                                            >
+                                                <Eye size={14} className="mr-1" /> {t('viewReferral')}
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-6 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                                                onClick={(e) => { e.stopPropagation(); setReferralToPrint(ref); }}
+                                            >
+                                                <Printer size={14} className="mr-1" /> {t('printReferral')}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="font-medium text-surface-900 dark:text-white">
+                                            {ref.recipientName || ref.recipientSpecialty}
+                                        </span>
+                                        {ref.urgency === 'urgent' && (
+                                            <span className="px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-[10px] font-bold uppercase">
+                                                {t('urgencyUrgent')}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {ref.reason && (
+                                        <div className="text-xs text-surface-500 italic bg-surface-50 dark:bg-surface-800 p-2 rounded mt-1">
+                                            {ref.reason}
                                         </div>
                                     )}
                                 </Card>
@@ -1150,8 +1243,6 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
             isOpen={showTreatmentModal}
             onClose={() => setShowTreatmentModal(false)}
             onSubmit={handleAddTreatment}
-            initialTooth={selectedTooth}
-            initialSurface={selectedSurface}
           />
       )}
 
@@ -1248,6 +1339,53 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({
             patient={patient}
             doctorName={currentUser?.name || "Doctor"}
             onClose={() => setPrescriptionToPrint(null)}
+          />
+      )}
+
+      {showCertificateModal && (
+          <CertificateModal
+            isOpen={showCertificateModal}
+            onClose={() => setShowCertificateModal(false)}
+            patientId={patient.id}
+            patientName={patient.name}
+            onSubmit={handleCreateCertificate}
+          />
+      )}
+
+      {certificateToPrint && (
+          <CertificatePrintView
+            certificate={certificateToPrint}
+            patient={patient}
+            doctorName={currentUser?.name || "Doctor"}
+            onClose={() => setCertificateToPrint(null)}
+          />
+      )}
+
+      {showReferralModal && (
+          <ReferralModal
+            isOpen={showReferralModal}
+            onClose={() => setShowReferralModal(false)}
+            patientId={patient.id}
+            patientName={patient.name}
+            onSubmit={handleCreateReferral}
+          />
+      )}
+
+      {referralToPrint && (
+          <ReferralPrintView
+            referral={referralToPrint}
+            patient={patient}
+            doctorName={currentUser?.name || "Doctor"}
+            onClose={() => setReferralToPrint(null)}
+          />
+      )}
+
+      {referralToView && (
+          <ReferralViewModal
+            referral={referralToView}
+            patientName={patient.name}
+            onClose={() => setReferralToView(null)}
+            onPrint={() => { setReferralToPrint(referralToView); setReferralToView(null); }}
           />
       )}
     </div>

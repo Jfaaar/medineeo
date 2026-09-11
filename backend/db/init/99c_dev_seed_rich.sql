@@ -3,7 +3,7 @@
 -- can be re-applied to a running container with `psql -f`.
 --
 -- Existing baseline (from 99_dev_seed.sql):
---   clinic   00000000-0000-0000-0000-0000000000c1  Dev Clinic (general_practice + dental)
+--   clinic   00000000-0000-0000-0000-0000000000c1  Dev Clinic (general_practice)
 --   user     00000000-0000-0000-0000-000000000001  Demo User (clinic_admin)
 --   patient  ...0001a1  Alice Demo
 --   patient  ...0001a2  Bob Demo
@@ -17,7 +17,6 @@
 --   vaccinations           c000...0001
 --   body_region_findings   b000...0001
 --   clinical_notes         e000...0001
---   dental_chart_entries   d000...0001
 --   suppliers              be00...0001
 --   inventory_items        bf00...0001
 --   insurance_providers    cc00...0001
@@ -293,31 +292,11 @@ INSERT INTO clinical_notes (id, clinic_id, patient_id, doctor_id, appointment_id
      '00000000-0000-0000-0000-0000000001a2',
      '00000000-0000-0000-0000-000000000002',
      '00000000-0000-0000-0000-a00000000003',
-     'Routine cleaning + asthma check',
-     'No active dental complaints. Mild post-exercise wheeze.',
-     'Healthy dentition. Asthma stable.',
+     'Routine check-up + asthma follow-up',
+     'No new complaints. Mild post-exercise wheeze.',
+     'Stable. Asthma well-controlled.',
      NULL, NULL, NULL, NULL,
      NOW() - INTERVAL '30 days')
-  ON CONFLICT (id) DO NOTHING;
-
--- ─── Dental chart entries (Bob — for dental specialty test) ─────────────────
-INSERT INTO dental_chart_entries (id, clinic_id, patient_id, tooth, surface,
-                                  finding, notes, recorded_at, recorded_by)
-  VALUES
-    ('00000000-0000-0000-0000-d00000000001',
-     '00000000-0000-0000-0000-0000000000c1',
-     '00000000-0000-0000-0000-0000000001a2',
-     '16', 'occlusal', 'caries',
-     'Small occlusal lesion. Plan: composite filling.',
-     NOW() - INTERVAL '30 days',
-     '00000000-0000-0000-0000-000000000002'),
-    ('00000000-0000-0000-0000-d00000000002',
-     '00000000-0000-0000-0000-0000000000c1',
-     '00000000-0000-0000-0000-0000000001a2',
-     '36', NULL, 'restoration',
-     'Existing amalgam, intact.',
-     NOW() - INTERVAL '180 days',
-     '00000000-0000-0000-0000-000000000002')
   ON CONFLICT (id) DO NOTHING;
 
 -- ─── Suppliers ───────────────────────────────────────────────────────────────
@@ -328,7 +307,7 @@ INSERT INTO suppliers (id, clinic_id, name, contact_person, phone, email)
      'MedSupply Maroc', 'Karim Bennani', '+212522111222', 'karim@medsupply.ma'),
     ('00000000-0000-0000-0000-be0000000002',
      '00000000-0000-0000-0000-0000000000c1',
-     'Dental Depot Casablanca', 'Sara Tazi', '+212522333444', 'sales@dentaldepot.ma')
+     'ClinicCare Distribution', 'Sara Tazi', '+212522333444', 'sales@cliniccare.ma')
   ON CONFLICT (id) DO NOTHING;
 
 -- ─── Inventory items ─────────────────────────────────────────────────────────
@@ -357,9 +336,9 @@ INSERT INTO inventory_items (id, clinic_id, supplier_id, name, type, category,
     ('00000000-0000-0000-0000-bf0000000004',
      '00000000-0000-0000-0000-0000000000c1',
      '00000000-0000-0000-0000-be0000000002',
-     'Composite resin A2', 'dental_material', 'restorative',
-     15, 5, 'syringe',
-     180.00, NULL, '2027-06-01', 'CR-A2-2025', '3M ESPE')
+     'Suture kit (absorbable)', 'consumable', 'minor-procedure',
+     15, 5, 'kit',
+     180.00, NULL, '2027-06-01', 'SK-2025', 'Ethicon')
   ON CONFLICT (id) DO NOTHING;
 
 -- ─── Insurance providers + policy ────────────────────────────────────────────
@@ -379,7 +358,7 @@ INSERT INTO insurance_policies (id, clinic_id, patient_id, provider_id,
      'CNSS-A-12345', 70.0, '2027-12-31')
   ON CONFLICT (id) DO NOTHING;
 
--- ─── Treatment plan + treatments (Bob, dental case) ─────────────────────────
+-- ─── Treatment plan + treatments (Bob) ───────────────────────────────────────
 INSERT INTO treatment_plans (id, clinic_id, patient_id, doctor_id, title, status,
                              estimated_total, discount, insurance_covered,
                              patient_responsibility, accepted_at)
@@ -388,28 +367,26 @@ INSERT INTO treatment_plans (id, clinic_id, patient_id, doctor_id, title, status
      '00000000-0000-0000-0000-0000000000c1',
      '00000000-0000-0000-0000-0000000001a2',
      '00000000-0000-0000-0000-000000000002',
-     'Dental restoration plan', 'accepted',
+     'Respiratory care plan', 'accepted',
      800.00, 0, 0, 800.00, NOW() - INTERVAL '20 days')
   ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO treatments (id, clinic_id, patient_id, plan_id, doctor_id,
-                        tooth, surface, description, price, status, performed_at)
+                        description, price, status, performed_at)
   VALUES
     ('00000000-0000-0000-0000-ad0000000001',
      '00000000-0000-0000-0000-0000000000c1',
      '00000000-0000-0000-0000-0000000001a2',
      '00000000-0000-0000-0000-ac0000000001',
      '00000000-0000-0000-0000-000000000002',
-     '16', 'occlusal',
-     'Composite filling — tooth 16 occlusal',
+     'Nebulizer treatment session',
      500.00, 'completed', NOW() - INTERVAL '15 days'),
     ('00000000-0000-0000-0000-ad0000000002',
      '00000000-0000-0000-0000-0000000000c1',
      '00000000-0000-0000-0000-0000000001a2',
      '00000000-0000-0000-0000-ac0000000001',
      '00000000-0000-0000-0000-000000000002',
-     NULL, NULL,
-     'Prophylaxis cleaning',
+     'Spirometry / pulmonary function test',
      300.00, 'completed', NOW() - INTERVAL '30 days')
   ON CONFLICT (id) DO NOTHING;
 
@@ -439,7 +416,7 @@ INSERT INTO prescription_items (id, clinic_id, prescription_id, medication_name,
      'Metformin', '500mg', 'Twice daily with meals', '90 days', true)
   ON CONFLICT (id) DO NOTHING;
 
--- ─── Invoices + items + payment (Bob — for the dental treatment) ───────────
+-- ─── Invoices + items + payment (Bob — for the treatment plan above) ───────
 INSERT INTO invoices (id, clinic_id, patient_id, appointment_id, number, amount,
                       paid_amount, status, issued_at, due_at)
   VALUES
@@ -460,12 +437,12 @@ INSERT INTO invoice_items (id, clinic_id, invoice_id, treatment_id,
      '00000000-0000-0000-0000-0000000000c1',
      '00000000-0000-0000-0000-f00000000001',
      '00000000-0000-0000-0000-ad0000000001',
-     'Composite filling — tooth 16 occlusal', 1, 500.00),
+     'Nebulizer treatment session', 1, 500.00),
     ('00000000-0000-0000-0000-bb0000000002',
      '00000000-0000-0000-0000-0000000000c1',
      '00000000-0000-0000-0000-f00000000001',
      '00000000-0000-0000-0000-ad0000000002',
-     'Prophylaxis cleaning', 1, 300.00)
+     'Spirometry / pulmonary function test', 1, 300.00)
   ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO payments (id, clinic_id, invoice_id, amount, method, paid_at,

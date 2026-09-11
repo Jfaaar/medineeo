@@ -27,8 +27,6 @@ import { useLanguage } from '../../features/language/LanguageContext';
 import { cn } from '../../lib/utils';
 import { DashboardHero } from './components/DashboardHero';
 import { KpiCard } from './components/KpiCard';
-import { useClinicSpecialty } from '../settings/useClinicSpecialty';
-import { DentalLabSummaryCard } from '../dental/components/DentalLabSummaryCard';
 
 const buildSparkline = (
   source: { date: Date; value: number }[],
@@ -50,7 +48,6 @@ const buildSparkline = (
 
 export const DashboardPage: React.FC = () => {
   const { t } = useLanguage();
-  const { profile } = useClinicSpecialty();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -238,9 +235,6 @@ export const DashboardPage: React.FC = () => {
               caption={alertsTotal > 0 ? t('actionRequired') : t('allHealthy')}
             />
           </div>
-
-          {/* Dental layout profile adds a lab-case tracker. */}
-          {profile.dashboardPreset === 'dental' && <DentalLabSummaryCard />}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Today's Agenda */}

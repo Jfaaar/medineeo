@@ -30,8 +30,6 @@ const treatmentPlansListQuerySchema = z.object({
 const planItemCreateSchema = z.object({
   description: z.string().min(1),
   price: z.number().nonnegative().default(0),
-  tooth: z.string().optional().nullable(),
-  surface: z.string().optional().nullable(),
 });
 
 const convertToAppointmentsSchema = z.object({

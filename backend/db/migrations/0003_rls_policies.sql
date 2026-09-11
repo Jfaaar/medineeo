@@ -15,7 +15,7 @@ DECLARE
   tables TEXT[] := ARRAY[
     'patients','patient_medical_history','rooms',
     'appointments','appointment_logs',
-    'clinical_notes','dental_chart_entries',
+    'clinical_notes',
     'treatment_plans','treatments','quotes',
     'insurance_providers','insurance_policies','insurance_claims',
     'invoices','invoice_items','payments',
@@ -42,7 +42,7 @@ DECLARE
   scoped TEXT[] := ARRAY[
     'patients','patient_medical_history','rooms',
     'appointments','appointment_logs',
-    'clinical_notes','dental_chart_entries',
+    'clinical_notes',
     'treatment_plans','treatments','quotes',
     'insurance_policies','insurance_claims',
     'invoices','invoice_items','payments',
