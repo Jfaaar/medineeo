@@ -1,4 +1,4 @@
-// SOAP-format clinical note editor for non-dental specialties.
+// SOAP-format clinical note editor.
 // Writes to the new subjective/objective/assessment/plan columns on
 // clinical_notes. Lists existing SOAP notes for the patient and lets
 // the user create a new one. Signing/locking flows through the same

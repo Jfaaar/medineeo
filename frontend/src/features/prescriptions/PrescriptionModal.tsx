@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { InventoryItem, Prescription, PrescriptionItem } from '../../types';
+import { Prescription, PrescriptionItem } from '../../types';
 import { useLanguage } from '../language/LanguageContext';
-import { Search, Plus, Trash2, Printer, Pill, AlertCircle, Package } from 'lucide-react';
-import { api } from '../../lib/api';
+import { Search, Plus, Trash2, Printer, Pill } from 'lucide-react';
+import { medicamentsCatalogService, type CatalogMedicament } from '../../lib/services/medicamentsCatalog';
 import { cn } from '../../lib/utils';
 
 interface PrescriptionModalProps {
@@ -24,13 +24,13 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
   onSubmit
 }) => {
   const { t } = useLanguage();
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [results, setResults] = useState<CatalogMedicament[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState<PrescriptionItem[]>([]);
   const [notes, setNotes] = useState('');
 
   // Item Form State
-  const [selectedDrug, setSelectedDrug] = useState<InventoryItem | null>(null);
+  const [selectedDrug, setSelectedDrug] = useState<CatalogMedicament | null>(null);
   const [dosage, setDosage] = useState('');
   const [frequency, setFrequency] = useState('');
   const [duration, setDuration] = useState('');
@@ -38,15 +38,25 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
 
   useEffect(() => {
       if (isOpen) {
-          api.inventory.list().then(data => {
-              // Only show medicaments for prescription
-              setInventory(data.filter(i => i.type === 'medicament'));
-          });
           setItems([]);
           setNotes('');
           resetItemForm();
       }
   }, [isOpen]);
+
+  // Debounced server-side search against the full medicaments catalog
+  // (~9800 reference drugs), not just the clinic's own stocked inventory.
+  useEffect(() => {
+      if (!isOpen) return;
+      let active = true;
+      const handle = setTimeout(() => {
+          medicamentsCatalogService
+              .list({ search: searchQuery.trim() || undefined, pageSize: 15 })
+              .then(res => { if (active) setResults(res.data); })
+              .catch(() => { if (active) setResults([]); });
+      }, 250);
+      return () => { active = false; clearTimeout(handle); };
+  }, [isOpen, searchQuery]);
 
   const resetItemForm = () => {
       setSelectedDrug(null);
@@ -57,11 +67,16 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
       setItemNote('');
   };
 
+  const selectDrug = (drug: CatalogMedicament) => {
+      setSelectedDrug(drug);
+      setDosage(drug.dosage || '');
+      // Don't clear search query, keeps context
+  };
+
   const addItem = () => {
       if (!selectedDrug) return;
       const newItem: PrescriptionItem = {
-          medicamentId: selectedDrug.id,
-          medicamentName: selectedDrug.name,
+          medicamentName: selectedDrug.specialite,
           dosage,
           frequency,
           duration,
@@ -84,10 +99,6 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
       });
       onClose();
   };
-
-  const filteredInventory = searchQuery 
-    ? inventory.filter(i => i.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 10)
-    : inventory.slice(0, 10); // Show recent/all if no search
 
   const quickDosages = ['500mg', '1g', '1 Tablet', '5ml'];
   const quickFreq = ['1x / day', '2x / day', '3x / day', 'Before meal'];
@@ -119,10 +130,11 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
              </div>
              
              <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                 {filteredInventory.map(drug => {
-                     const isLowStock = drug.stock <= (drug.minStock || 5);
-                     return (
-                        <div 
+                 {results.length === 0 && (
+                     <div className="text-xs italic text-surface-400 p-2">—</div>
+                 )}
+                 {results.map(drug => (
+                        <div
                             key={drug.id}
                             className={cn(
                                 "p-3 rounded-lg cursor-pointer transition-all border",
@@ -130,22 +142,17 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
                                     ? "bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-800 ring-1 ring-primary-500"
                                     : "bg-white dark:bg-surface-800 border-transparent hover:border-surface-200 dark:hover:border-surface-700 hover:shadow-sm"
                             )}
-                            onClick={() => {
-                                setSelectedDrug(drug);
-                                // Don't clear search query, keeps context
-                            }}
+                            onClick={() => selectDrug(drug)}
                         >
                             <div className="flex justify-between items-start">
-                                <span className="font-bold text-sm text-surface-900 dark:text-white line-clamp-1">{drug.name}</span>
-                                {isLowStock && <AlertCircle size={14} className="text-red-500 shrink-0" />}
+                                <span className="font-bold text-sm text-surface-900 dark:text-white line-clamp-1">{drug.specialite}</span>
                             </div>
                             <div className="flex justify-between mt-1 text-xs text-surface-500">
-                                <span>{drug.form}</span>
-                                <span className={isLowStock ? "text-red-500 font-bold" : ""}>{drug.stock} left</span>
+                                <span>{[drug.dosage, drug.forme].filter(Boolean).join(' · ') || '—'}</span>
+                                {drug.laboratoire && <span className="line-clamp-1">{drug.laboratoire}</span>}
                             </div>
                         </div>
-                     );
-                 })}
+                 ))}
              </div>
          </div>
 
@@ -162,12 +169,14 @@ export const PrescriptionModal: React.FC<PrescriptionModalProps> = ({
                  <div className="space-y-5 animate-fade-in">
                      <div>
                          <h3 className="text-lg font-bold text-surface-900 dark:text-white flex items-center gap-2">
-                             {selectedDrug.name}
-                             <span className="text-xs font-normal bg-surface-100 dark:bg-surface-800 px-2 py-0.5 rounded text-surface-500">{selectedDrug.form}</span>
+                             {selectedDrug.specialite}
+                             {selectedDrug.forme && (
+                                 <span className="text-xs font-normal bg-surface-100 dark:bg-surface-800 px-2 py-0.5 rounded text-surface-500">{selectedDrug.forme}</span>
+                             )}
                          </h3>
-                         <div className="flex items-center gap-2 text-xs text-surface-500 mt-1">
-                             <Package size={12}/> Stock: {selectedDrug.stock} available
-                         </div>
+                         {selectedDrug.laboratoire && (
+                             <div className="text-xs text-surface-500 mt-1">{selectedDrug.laboratoire}</div>
+                         )}
                      </div>
 
                      <div className="space-y-4">

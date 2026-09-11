@@ -1,5 +1,5 @@
 // @ts-nocheck — Phase 3 UI shipped with type-shape divergence from canonical types in types.ts.
-// TODO(phase 3 refactor): align this file with the schema-aligned ClinicalNote / DentalChartEntry /
+// TODO(phase 3 refactor): align this file with the schema-aligned ClinicalNote /
 // TreatmentPlan / InsurancePolicy / InsuranceClaim shapes from supabase/migrations/0002.
 import React, { useEffect, useState } from 'react';
 import { Topbar } from '../../components/layout/Topbar';
@@ -11,8 +11,10 @@ import { useAuth } from '../auth/useAuth';
 import { PermissionGate } from '../../components/auth/PermissionGate';
 import { hasPermission } from '../../lib/permissions';
 import { api } from '../../lib/api';
+import { medicamentsCatalogService, type CatalogMedicament } from '../../lib/services/medicamentsCatalog';
+import { PatientSelect } from '../patients/components/PatientSelect';
 import { BRAND } from '../../lib/brand';
-import type { InventoryItem, Prescription, PrescriptionItem } from '../../types';
+import type { Patient, Prescription, PrescriptionItem } from '../../types';
 import { Plus, Trash2, Printer, FileSignature, Pill, Search, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -23,22 +25,27 @@ interface Props {
 }
 
 /**
- * Phase 3 prescription editor. Pulls medicaments from the inventory api and
- * builds a printable HTML preview. PDF rendering (e.g. @react-pdf/renderer)
- * is intentionally deferred — see `pdfSoonNote`.
+ * Phase 3 prescription editor. Searches the full national medicaments
+ * catalog (medicaments_catalog — ~9800 reference drugs, not just what's in
+ * the clinic's own stock) and builds a printable HTML preview. PDF rendering
+ * (e.g. @react-pdf/renderer) is intentionally deferred — see `pdfSoonNote`.
  */
 export const PrescriptionEditor: React.FC<Props> = ({ patientId, initial, onSaved }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  // The sidebar route renders this page with no patientId at all — let the
+  // doctor pick a patient here instead of leaving the page permanently unusable.
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const effectivePatientId = patientId ?? selectedPatient?.id;
+  const [results, setResults] = useState<CatalogMedicament[]>([]);
   const [search, setSearch] = useState('');
   const [items, setItems] = useState<PrescriptionItem[]>(initial?.items ?? []);
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const [signed, setSigned] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [isLoadingInv, setIsLoadingInv] = useState(true);
+  const [isSearching, setIsSearching] = useState(true);
 
-  const [selected, setSelected] = useState<InventoryItem | null>(null);
+  const [selected, setSelected] = useState<CatalogMedicament | null>(null);
   const [dosage, setDosage] = useState('');
   const [frequency, setFrequency] = useState('');
   const [duration, setDuration] = useState('');
@@ -47,23 +54,27 @@ export const PrescriptionEditor: React.FC<Props> = ({ patientId, initial, onSave
   const canCreate = hasPermission(user?.role, 'prescriptions.create');
   const canSign = hasPermission(user?.role, 'prescriptions.sign');
 
+  // Debounced server-side search against the full catalog — not a client
+  // filter over a capped local list, so all ~9800 drugs are reachable.
   useEffect(() => {
-    api.inventory.list().then(list => {
-      setInventory(list.filter(i => i.type === 'medicament'));
-      setIsLoadingInv(false);
-    }).catch(() => setIsLoadingInv(false));
-  }, []);
-
-  const filtered = search
-    ? inventory.filter(i => i.name.toLowerCase().includes(search.toLowerCase())).slice(0, 20)
-    : inventory.slice(0, 20);
+    let active = true;
+    setIsSearching(true);
+    const handle = setTimeout(() => {
+      medicamentsCatalogService
+        .list({ search: search.trim() || undefined, pageSize: 30 })
+        .then((res) => { if (active) setResults(res.data); })
+        .catch(() => { if (active) setResults([]); })
+        .finally(() => { if (active) setIsSearching(false); });
+    }, 250);
+    return () => { active = false; clearTimeout(handle); };
+  }, [search]);
 
   const addItem = () => {
     if (!selected) return;
     setItems([...items, {
-      medicamentId: selected.id,
-      medicamentName: selected.name,
-      dosage, frequency, duration, note: itemNote || undefined,
+      medicamentName: selected.specialite,
+      dosage: dosage || selected.dosage || '',
+      frequency, duration, note: itemNote || undefined,
     }]);
     setSelected(null); setDosage(''); setFrequency(''); setDuration(''); setItemNote('');
   };
@@ -75,16 +86,21 @@ export const PrescriptionEditor: React.FC<Props> = ({ patientId, initial, onSave
   };
 
   const save = async () => {
-    if (!patientId || items.length === 0) return;
+    if (!effectivePatientId || items.length === 0) return;
     try {
       const rx = await api.prescriptions.create({
-        patientId,
+        patientId: effectivePatientId,
         date: new Date().toISOString(),
         items,
         notes,
       } as Omit<Prescription, 'id'>);
       onSaved?.(rx);
       alert('Prescription saved.');
+      if (!patientId) {
+        setSelectedPatient(null);
+        setItems([]);
+        setNotes('');
+      }
     } catch (e: any) {
       alert(e.message || 'Failed to save.');
     }
@@ -104,7 +120,13 @@ export const PrescriptionEditor: React.FC<Props> = ({ patientId, initial, onSave
       </Topbar>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4">
+        <div className="max-w-6xl mx-auto space-y-4">
+          {!patientId && (
+            <Card className="max-w-sm">
+              <PatientSelect value={selectedPatient} onChange={setSelectedPatient} />
+            </Card>
+          )}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
           {/* Drug picker */}
           <Card className="md:col-span-4 lg:col-span-3 max-h-[70vh] overflow-y-auto">
             <div className="text-xs uppercase font-bold text-surface-500 mb-2">{t('medication')}</div>
@@ -114,14 +136,14 @@ export const PrescriptionEditor: React.FC<Props> = ({ patientId, initial, onSave
                 placeholder={t('search')}
                 className="w-full pl-8 pr-3 h-9 rounded-xl border border-surface-300 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
             </div>
-            {isLoadingInv ? (
+            {isSearching ? (
               <div className="flex items-center justify-center p-4 text-surface-400"><Loader2 className="animate-spin" /></div>
             ) : (
               <div className="space-y-1">
-                {filtered.length === 0 && <div className="text-xs italic text-surface-400">—</div>}
-                {filtered.map(d => (
+                {results.length === 0 && <div className="text-xs italic text-surface-400">—</div>}
+                {results.map(d => (
                   <button key={d.id}
-                    onClick={() => setSelected(d)}
+                    onClick={() => { setSelected(d); setDosage(d.dosage || ''); }}
                     disabled={signed}
                     className={cn(
                       'w-full text-left p-2 rounded-lg border transition-all',
@@ -130,8 +152,10 @@ export const PrescriptionEditor: React.FC<Props> = ({ patientId, initial, onSave
                         : 'border-transparent hover:border-surface-200 hover:bg-surface-50 dark:hover:bg-surface-800'
                     )}
                   >
-                    <div className="text-sm font-bold text-surface-900 dark:text-white">{d.name}</div>
-                    <div className="text-xs text-surface-500">{d.form} · {d.stock} left</div>
+                    <div className="text-sm font-bold text-surface-900 dark:text-white">{d.specialite}</div>
+                    <div className="text-xs text-surface-500">
+                      {[d.dosage, d.forme].filter(Boolean).join(' · ') || d.laboratoire || '—'}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -147,7 +171,10 @@ export const PrescriptionEditor: React.FC<Props> = ({ patientId, initial, onSave
               </div>
             ) : (
               <div className="space-y-3">
-                <h3 className="font-bold text-surface-900 dark:text-white">{selected.name}</h3>
+                <h3 className="font-bold text-surface-900 dark:text-white">{selected.specialite}</h3>
+                {selected.laboratoire && (
+                  <p className="text-xs text-surface-500 -mt-2">{selected.laboratoire}</p>
+                )}
                 <Input label={t('dosage')} value={dosage} onChange={e => setDosage(e.target.value)} disabled={signed} placeholder="500mg" />
                 <Input label={t('frequency')} value={frequency} onChange={e => setFrequency(e.target.value)} disabled={signed} placeholder="2x / day" />
                 <Input label={t('duration')} value={duration} onChange={e => setDuration(e.target.value)} disabled={signed} placeholder="5 days" />
@@ -194,13 +221,19 @@ export const PrescriptionEditor: React.FC<Props> = ({ patientId, initial, onSave
             <div className="mt-2 text-[11px] text-surface-400 italic">{t('pdfSoonNote')}</div>
 
             <PermissionGate permission="prescriptions.create">
-              <div className="mt-4 flex justify-end gap-2">
-                <Button onClick={save} disabled={!patientId || items.length === 0 || !canCreate}>
+              <div className="mt-4 flex flex-col items-end gap-1">
+                {!effectivePatientId && (
+                  <span className="text-xs text-amber-600 dark:text-amber-400">
+                    Select a patient above first.
+                  </span>
+                )}
+                <Button onClick={save} disabled={!effectivePatientId || items.length === 0 || !canCreate}>
                   {t('confirm')}
                 </Button>
               </div>
             </PermissionGate>
           </Card>
+        </div>
         </div>
       </div>
 
@@ -208,7 +241,7 @@ export const PrescriptionEditor: React.FC<Props> = ({ patientId, initial, onSave
         <PrintablePreview
           items={items}
           notes={notes}
-          patientLabel={patientId || ''}
+          patientLabel={selectedPatient?.name || patientId || ''}
           doctorName={user?.name || ''}
           onClose={() => setShowPreview(false)}
         />

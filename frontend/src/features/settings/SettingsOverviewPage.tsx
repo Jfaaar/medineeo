@@ -32,7 +32,6 @@ const SPECIALTY_LABEL_KEYS: Record<SpecialtyCode, string> = {
 };
 
 const CHART_LABEL: Record<string, string> = {
-  dentalChart: 'Odontogram',
   bodyRegionChart: 'Body-region chart',
   growthCharts: 'Growth charts',
   eyeExam: 'Eye exam (OD/OS)',

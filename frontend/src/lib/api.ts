@@ -12,6 +12,8 @@ import {
   Quote,
   InventoryItem,
   Prescription,
+  Certificate,
+  Referral,
   Supplier,
 } from '../types';
 import {
@@ -21,6 +23,8 @@ import {
   treatmentsService,
   quotesService,
   prescriptionsService,
+  certificatesService,
+  referralsService,
   inventoryService,
   suppliersService,
 } from './services';
@@ -196,5 +200,35 @@ export const api = {
     },
     create: (prescription: Omit<Prescription, 'id'>) =>
       prescriptionsService.create(prescription),
+  },
+
+  certificates: {
+    list: async (patientId: string): Promise<Certificate[]> => {
+      const { data } = await certificatesService.list({ patientId, pageSize: 500 });
+      return data;
+    },
+    listAll: async (): Promise<Certificate[]> => {
+      const { data } = await certificatesService.list({ pageSize: 500 });
+      return data;
+    },
+    create: (certificate: Omit<Certificate, 'id'>) =>
+      certificatesService.create(certificate),
+    sign: (id: string) => certificatesService.sign(id),
+    remove: (id: string) => certificatesService.remove(id),
+  },
+
+  referrals: {
+    list: async (patientId: string): Promise<Referral[]> => {
+      const { data } = await referralsService.list({ patientId, pageSize: 500 });
+      return data;
+    },
+    listAll: async (): Promise<Referral[]> => {
+      const { data } = await referralsService.list({ pageSize: 500 });
+      return data;
+    },
+    create: (referral: Omit<Referral, 'id'>) =>
+      referralsService.create(referral),
+    sign: (id: string) => referralsService.sign(id),
+    remove: (id: string) => referralsService.remove(id),
   },
 };

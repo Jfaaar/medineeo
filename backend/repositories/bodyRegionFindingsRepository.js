@@ -1,5 +1,4 @@
-// Body region findings — pg. Generic anatomy chart entries replacing the
-// odontogram for non-dental specialties.
+// Body region findings — pg. Generic anatomy chart entries.
 function fromDb(row) {
   if (!row) return null;
   return {

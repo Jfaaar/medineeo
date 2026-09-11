@@ -9,51 +9,6 @@
 // Never act on a *removal* of a specialty — keep historical data; the
 // feature gate alone stops surfacing it.
 
-// ─── Dental: starter consumables / materials catalog ────────────────────────
-const DENTAL_CATEGORY = 'Dental supplies';
-const DENTAL_CATALOG = [
-  { name: 'Composite resin (universal shade)',          type: 'dental_material', unit: 'syringe', minStock: 5 },
-  { name: 'Anaesthetic carpules (lidocaine 2%)',        type: 'consumable',      unit: 'box',     minStock: 2 },
-  { name: 'Dental burs (assorted)',                     type: 'consumable',      unit: 'pack',    minStock: 3 },
-  { name: 'Endodontic files (K-files, assorted)',       type: 'consumable',      unit: 'pack',    minStock: 3 },
-  { name: 'Impression material (alginate)',             type: 'dental_material', unit: 'bag',     minStock: 2 },
-  { name: 'Impression material (silicone)',             type: 'dental_material', unit: 'kit',     minStock: 2 },
-  { name: 'Gutta-percha points',                        type: 'dental_material', unit: 'box',     minStock: 3 },
-  { name: 'Glass ionomer cement',                       type: 'dental_material', unit: 'kit',     minStock: 2 },
-  { name: 'Etchant gel (37% phosphoric acid)',          type: 'dental_material', unit: 'syringe', minStock: 2 },
-  { name: 'Bonding agent',                              type: 'dental_material', unit: 'bottle',  minStock: 2 },
-  { name: 'Examination gloves (nitrile, M)',            type: 'consumable',      unit: 'box',     minStock: 5 },
-  { name: 'Face masks (3-ply)',                         type: 'consumable',      unit: 'box',     minStock: 5 },
-  { name: 'Saliva ejectors',                            type: 'consumable',      unit: 'pack',    minStock: 3 },
-  { name: 'Cotton rolls',                               type: 'consumable',      unit: 'pack',    minStock: 5 },
-  { name: 'Prophy paste',                               type: 'dental_material', unit: 'jar',     minStock: 2 },
-  { name: 'Fluoride varnish',                           type: 'dental_material', unit: 'box',     minStock: 2 },
-];
-
-async function seedDental(db, clinicId) {
-  // Idempotent: the marker category lets us re-run without duplicating.
-  const existing = await db.query(
-    `SELECT COUNT(*)::int AS n FROM inventory_items WHERE clinic_id = $1 AND category = $2`,
-    [clinicId, DENTAL_CATEGORY],
-  );
-  if ((existing.rows[0]?.n ?? 0) > 0) return;
-
-  const values = [];
-  const params = [];
-  for (const item of DENTAL_CATALOG) {
-    const b = params.length;
-    // columns: clinic_id, name, type, category, stock(0), min_stock, unit
-    values.push(`($${b + 1}, $${b + 2}, $${b + 3}::inventory_type, $${b + 4}, 0, $${b + 5}, $${b + 6})`);
-    params.push(clinicId, item.name, item.type, DENTAL_CATEGORY, item.minStock, item.unit);
-  }
-  await db.query(
-    `INSERT INTO inventory_items (clinic_id, name, type, category, stock, min_stock, unit)
-     VALUES ${values.join(', ')}`,
-    params,
-  );
-  console.log(`[specialtyDefaultsSeeder] seeded ${DENTAL_CATALOG.length} dental inventory items for clinic ${clinicId}`);
-}
-
 // ─── No-op handlers for packs whose seeds haven't been written yet ──────────
 function noopSeeder(code) {
   return async function seed(_db, clinicId) {
@@ -66,7 +21,7 @@ function noopSeeder(code) {
 
 const SPECIALTY_SEEDERS = {
   general_practice: noopSeeder('general_practice'),
-  dental:           seedDental,
+  dental:           noopSeeder('dental'),
   pediatrics:       noopSeeder('pediatrics'),
   gynecology:       noopSeeder('gynecology'),
   cardiology:       noopSeeder('cardiology'),
@@ -91,4 +46,4 @@ async function seedSpecialtyDefaults(db, clinicId, addedCodes) {
   }
 }
 
-module.exports = { seedSpecialtyDefaults, SPECIALTY_SEEDERS, DENTAL_CATALOG, DENTAL_CATEGORY };
+module.exports = { seedSpecialtyDefaults, SPECIALTY_SEEDERS };

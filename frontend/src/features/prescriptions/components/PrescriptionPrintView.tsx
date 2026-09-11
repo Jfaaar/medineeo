@@ -64,7 +64,7 @@ export const PrescriptionPrintView: React.FC<PrescriptionPrintViewProps> = ({
                 </div>
                 <div className="text-right">
                     <h3 className="text-xl font-bold text-primary-800">{doctorName}</h3>
-                    <p className="text-sm text-surface-600">Dental Surgeon</p>
+                    <p className="text-sm text-surface-600">Physician</p>
                     <p className="text-xs text-surface-500">Licence #12345</p>
                 </div>
             </header>

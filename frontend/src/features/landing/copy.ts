@@ -235,7 +235,7 @@ const en: LandingCopy = {
     items: [
       { title: 'Patient management', body: 'Unified records — demographics, history, allergies, contacts, documents.' },
       { title: 'Smart scheduling', body: 'Conflict detection, drag-to-reschedule, cross-staff and per-room views.' },
-      { title: 'Clinical records', body: 'Notes, vitals, problem list, dental chart — every change auditable.' },
+      { title: 'Clinical records', body: 'Notes, vitals, problem list, treatment history — every change auditable.' },
       { title: 'Billing & insurance', body: 'Invoices and payments with auto-status, plus claims management.' },
       { title: 'Inventory & catalog', body: 'Stock control, supplier orders, AMMPS drug catalog at your fingertips.' },
       { title: 'Treatments & Rx', body: 'Plans, quotes, e-prescriptions linked to your medicaments database.' },
@@ -342,7 +342,7 @@ const en: LandingCopy = {
       },
       {
         q: 'Does it work on tablets and phones?',
-        a: `${BRAND.NAME} is fully responsive. The web app runs in any modern browser — desktop, tablet, or phone — and the dental chart, vitals, and prescription editor are all touch-optimized.`,
+        a: `${BRAND.NAME} is fully responsive. The web app runs in any modern browser — desktop, tablet, or phone — and the vitals, treatment history, and prescription editor are all touch-optimized.`,
       },
       {
         q: 'Can I self-host?',
@@ -487,7 +487,7 @@ const fr: LandingCopy = {
     items: [
       { title: 'Gestion des patients', body: 'Dossiers unifiés — état civil, antécédents, allergies, contacts, documents.' },
       { title: 'Planification intelligente', body: 'Détection des conflits, replanification par glisser-déposer, vues par praticien et par salle.' },
-      { title: 'Dossiers cliniques', body: 'Notes, constantes, liste des problèmes, schéma dentaire — chaque modification est traçable.' },
+      { title: 'Dossiers cliniques', body: 'Notes, constantes, liste des problèmes, historique des soins — chaque modification est traçable.' },
       { title: 'Facturation & assurance', body: 'Factures et paiements au statut automatique, et gestion des remboursements.' },
       { title: 'Stock & catalogue', body: 'Gestion du stock, commandes fournisseurs et catalogue AMMPS à portée de main.' },
       { title: 'Soins & ordonnances', body: 'Plans de traitement, devis et ordonnances reliés à votre base de médicaments.' },
@@ -594,7 +594,7 @@ const fr: LandingCopy = {
       },
       {
         q: 'Est-ce que cela fonctionne sur tablette et sur mobile ?',
-        a: `${BRAND.NAME} est entièrement responsive. L’application web fonctionne dans tout navigateur moderne — ordinateur, tablette ou téléphone — et le schéma dentaire, les constantes et l’éditeur d’ordonnance sont optimisés pour le tactile.`,
+        a: `${BRAND.NAME} est entièrement responsive. L’application web fonctionne dans tout navigateur moderne — ordinateur, tablette ou téléphone — et les constantes, l’historique des soins et l’éditeur d’ordonnance sont optimisés pour le tactile.`,
       },
       {
         q: 'Puis-je héberger la solution moi-même ?',

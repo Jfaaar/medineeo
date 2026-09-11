@@ -9,8 +9,6 @@ export interface Treatment {
   id: string;
   patientId: string;
   date: string;
-  tooth?: string;
-  surface?: string;
   description: string;
   price: number;
   status: 'planned' | 'completed';

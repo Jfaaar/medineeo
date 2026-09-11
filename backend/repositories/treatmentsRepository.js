@@ -7,8 +7,6 @@ function fromDb(row, materials) {
     id: row.id,
     patientId: row.patient_id,
     date: row.performed_at ?? row.created_at,
-    tooth: row.tooth ?? undefined,
-    surface: row.surface ?? undefined,
     description: row.description,
     price: num(row.price),
     status: row.status === 'completed' ? 'completed' : 'planned',
@@ -38,10 +36,10 @@ async function get(db, id) {
 async function create(db, input, clinicId) {
   const performedAt = input.status === 'completed' ? input.date ?? new Date().toISOString() : null;
   const r = await db.query(
-    `INSERT INTO treatments (clinic_id, patient_id, tooth, surface, description, price, status, performed_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+    `INSERT INTO treatments (clinic_id, patient_id, description, price, status, performed_at)
+     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
     [
-      clinicId, input.patientId, input.tooth ?? null, input.surface ?? null,
+      clinicId, input.patientId,
       input.description, input.price, input.status, performedAt,
     ],
   );
@@ -76,8 +74,6 @@ async function create(db, input, clinicId) {
 async function update(db, id, patch) {
   const sets = []; const params = [];
   const set = (col, val) => { params.push(val); sets.push(`${col} = $${params.length}`); };
-  if (patch.tooth !== undefined) set('tooth', patch.tooth ?? null);
-  if (patch.surface !== undefined) set('surface', patch.surface ?? null);
   if (patch.description !== undefined) set('description', patch.description);
   if (patch.price !== undefined) set('price', patch.price);
   if (patch.status !== undefined) {

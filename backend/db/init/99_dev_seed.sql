@@ -32,14 +32,11 @@ INSERT INTO profiles (id, name, role, clinic_id)
         role = EXCLUDED.role,
         clinic_id = EXCLUDED.clinic_id;
 
--- Multi-specialty dev clinic so both medical and dental UI surfaces are
--- exercised in development. Production deploys default to general_practice
--- only via the column defaults in 0008_medical_mvp.sql.
 INSERT INTO clinic_settings (clinic_id, primary_specialty, enabled_specialties)
   VALUES (
     '00000000-0000-0000-0000-0000000000c1',
     'general_practice',
-    ARRAY['general_practice','dental']
+    ARRAY['general_practice']
   )
   ON CONFLICT (clinic_id) DO UPDATE
     SET primary_specialty = EXCLUDED.primary_specialty,

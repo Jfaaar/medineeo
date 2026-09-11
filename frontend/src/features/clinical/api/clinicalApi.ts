@@ -23,18 +23,6 @@ export interface ClinicalNote {
   updatedAt: string;
 }
 
-export interface DentalChartEntry {
-  id: string;
-  clinicId: string;
-  patientId: string;
-  tooth: string;
-  surface?: string;
-  finding: string;
-  notes?: string;
-  recordedAt: string;
-  recordedBy?: string;
-}
-
 export const clinicalApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     // Notes
@@ -93,54 +81,6 @@ export const clinicalApi = baseApi.injectEndpoints({
         { type: 'ClinicalNote', id: 'LIST' },
       ],
     }),
-
-    // Dental chart
-    listDentalChart: build.query<
-      { data: DentalChartEntry[]; page: number; pageSize: number; total: number },
-      { page?: number; pageSize?: number; patientId?: string } | void
-    >({
-      query: (params) => ({
-        url: 'clinical/dental-chart',
-        params: (params ?? undefined) as Record<string, unknown> | undefined,
-      }),
-      transformResponse: (r: {
-        data: { data: DentalChartEntry[]; page: number; pageSize: number; total: number };
-      }) => r.data,
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.data.map((e) => ({ type: 'DentalChart' as const, id: e.id })),
-              { type: 'DentalChart' as const, id: 'LIST' },
-            ]
-          : [{ type: 'DentalChart' as const, id: 'LIST' }],
-    }),
-    createDentalChartEntry: build.mutation<DentalChartEntry, Partial<DentalChartEntry>>({
-      query: (body) => ({ url: 'clinical/dental-chart', method: 'POST', body }),
-      transformResponse: (r: { data: DentalChartEntry }) => r.data,
-      invalidatesTags: [{ type: 'DentalChart', id: 'LIST' }],
-    }),
-    updateDentalChartEntry: build.mutation<
-      DentalChartEntry,
-      { id: string; patch: Partial<DentalChartEntry> }
-    >({
-      query: ({ id, patch }) => ({
-        url: `clinical/dental-chart/${id}`,
-        method: 'PUT',
-        body: patch,
-      }),
-      transformResponse: (r: { data: DentalChartEntry }) => r.data,
-      invalidatesTags: (_r, _e, { id }) => [
-        { type: 'DentalChart', id },
-        { type: 'DentalChart', id: 'LIST' },
-      ],
-    }),
-    deleteDentalChartEntry: build.mutation<void, string>({
-      query: (id) => ({ url: `clinical/dental-chart/${id}`, method: 'DELETE' }),
-      invalidatesTags: (_r, _e, id) => [
-        { type: 'DentalChart', id },
-        { type: 'DentalChart', id: 'LIST' },
-      ],
-    }),
   }),
 });
 
@@ -151,8 +91,4 @@ export const {
   useUpdateClinicalNoteMutation,
   useSignClinicalNoteMutation,
   useDeleteClinicalNoteMutation,
-  useListDentalChartQuery,
-  useCreateDentalChartEntryMutation,
-  useUpdateDentalChartEntryMutation,
-  useDeleteDentalChartEntryMutation,
 } = clinicalApi;

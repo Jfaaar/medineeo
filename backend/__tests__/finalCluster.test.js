@@ -1,5 +1,5 @@
 // Auth gates + zod sanity checks across the final Phase 3 cluster:
-// clinical (notes + dental chart), insurance, settings, stats.
+// clinical (notes), insurance, settings, stats.
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createRequire } from 'node:module';
 import request from 'supertest';
@@ -16,7 +16,6 @@ beforeAll(() => {
 describe('Auth gates on final cluster', () => {
   it.each([
     '/api/v1/clinical/notes',
-    '/api/v1/clinical/dental-chart',
     '/api/v1/insurance/providers',
     '/api/v1/insurance/policies',
     '/api/v1/insurance/claims',
@@ -39,17 +38,6 @@ describe('Zod clinical validation', () => {
     ).toBe(true);
   });
 
-  it('dentalChartCreateSchema requires patientId + tooth + finding', () => {
-    const { dentalChartCreateSchema } = require('../validation/clinical.js');
-    expect(dentalChartCreateSchema.safeParse({}).success).toBe(false);
-    expect(
-      dentalChartCreateSchema.safeParse({
-        patientId: 'p1',
-        tooth: '11',
-        finding: 'caries',
-      }).success
-    ).toBe(true);
-  });
 });
 
 describe('Zod insurance validation', () => {

@@ -1,5 +1,5 @@
 // @ts-nocheck — Phase 3 UI shipped with type-shape divergence from canonical types in types.ts.
-// TODO(phase 3 refactor): align this file with the schema-aligned ClinicalNote / DentalChartEntry /
+// TODO(phase 3 refactor): align this file with the schema-aligned ClinicalNote /
 // TreatmentPlan / InsurancePolicy / InsuranceClaim shapes from supabase/migrations/0002.
 import React from 'react';
 import { hasPermission, PermissionKey } from '../../lib/permissions';
