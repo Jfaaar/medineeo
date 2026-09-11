@@ -1,6 +1,6 @@
 // Body-region chart: a simple SVG body silhouette divided into clickable
-// regions. Replaces the odontogram for non-dental specialties. Clicking
-// a region opens a modal to record a finding tied to that region.
+// regions. Clicking a region opens a modal to record a finding tied to
+// that region.
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';

@@ -43,8 +43,6 @@ function itemFromDb(row) {
     planId: row.plan_id ?? undefined,
     patientId: row.patient_id,
     description: row.description,
-    tooth: row.tooth ?? undefined,
-    surface: row.surface ?? undefined,
     price: num(row.price),
     status: row.status, // 'planned' | 'in_progress' | 'completed' | 'canceled'
     performedAt: row.performed_at ?? undefined,
@@ -163,15 +161,13 @@ async function addItem(db, planId, input, clinicId) {
   const patientId = planRow.rows[0].patient_id;
   const r = await db.query(
     `INSERT INTO treatments
-       (clinic_id, patient_id, plan_id, tooth, surface, description, price, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'planned')
+       (clinic_id, patient_id, plan_id, description, price, status)
+     VALUES ($1, $2, $3, $4, $5, 'planned')
      RETURNING *`,
     [
       clinicId,
       patientId,
       planId,
-      input.tooth ?? null,
-      input.surface ?? null,
       input.description,
       input.price ?? 0,
     ],
@@ -255,7 +251,7 @@ async function convertToAppointments(db, planId, clinicId, opts) {
     const offsetMs = i * opts.spacingDays * 86_400_000;
     const startsAt = new Date(startMs + offsetMs);
     const endsAt = new Date(startsAt.getTime() + opts.durationMinutes * 60_000);
-    const observation = `[Plan] ${item.description}${item.tooth ? ` — tooth ${item.tooth}` : ''}`;
+    const observation = `[Plan] ${item.description}`;
     const r = await db.query(
       `INSERT INTO appointments
          (clinic_id, patient_id, starts_at, ends_at, status, observation)

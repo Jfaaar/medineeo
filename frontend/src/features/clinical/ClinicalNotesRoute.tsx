@@ -1,13 +1,9 @@
-// Switches between the legacy free-form clinical note editor (used by
-// dental clinics) and the new SOAP editor (used by general medical
-// specialties), based on `useClinicSpecialty()`.
+// Patient-scoped clinical notes route — renders the SOAP editor.
 import React from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/ui/Button';
 import { Topbar } from '../../components/layout/Topbar';
-import { useClinicSpecialty } from '../settings/useClinicSpecialty';
-import { ClinicalNoteEditor } from './ClinicalNoteEditor';
 import { SOAPNoteEditor } from './SOAPNoteEditor';
 
 interface Props {
@@ -16,14 +12,8 @@ interface Props {
   onBack?: () => void;
 }
 
-export const ClinicalNotesRoute: React.FC<Props> = ({ patientId, patientName, onBack }) => {
+export const ClinicalNotesRoute: React.FC<Props> = ({ patientId, onBack }) => {
   const { t } = useTranslation();
-  const { has, isLoading } = useClinicSpecialty();
-  if (isLoading) return null;
-
-  if (has('dental')) {
-    return <ClinicalNoteEditor patientId={patientId} patientName={patientName} onBack={onBack} />;
-  }
 
   return (
     <div className="flex flex-col h-full bg-surface-50 dark:bg-surface-950">

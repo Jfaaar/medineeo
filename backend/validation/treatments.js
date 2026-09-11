@@ -9,8 +9,6 @@ const consumedMaterialSchema = z.object({
 
 const treatmentCreateSchema = z.object({
   patientId: z.string().min(1),
-  tooth: z.string().optional().nullable(),
-  surface: z.string().optional().nullable(),
   description: z.string().min(1),
   price: z.number(),
   status: z.enum(TREATMENT_STATUSES),

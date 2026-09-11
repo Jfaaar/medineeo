@@ -13,7 +13,8 @@ import {
   Stethoscope,
   Pill,
   Tablets,
-  FlaskConical,
+  Send,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '../../features/auth/useAuth';
 import { useFeatureAccessApi } from '../../features/settings/useFeatureAccess';
@@ -80,6 +81,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'patients', label: 'patients', icon: Users, feature: 'patients' },
         { id: 'treatments', label: 'treatments', icon: Stethoscope, feature: 'treatments' },
         { id: 'prescriptions', label: 'prescriptions', icon: Pill, feature: 'prescriptions' },
+        { id: 'certificates', label: 'certificates', icon: FileText, feature: 'certificates' },
+        { id: 'referrals', label: 'referrals', icon: Send, feature: 'referrals' },
       ],
     },
     {
@@ -89,7 +92,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'invoices', label: 'invoices', icon: Receipt, feature: 'invoices' },
         { id: 'inventory', label: 'inventory', icon: Package, feature: 'inventory' },
         { id: 'medicaments', label: 'medicaments', icon: Tablets, feature: 'medicaments' },
-        { id: 'dentalLab', label: 'labCases', icon: FlaskConical, feature: 'dentalChart' },
       ],
     },
     {

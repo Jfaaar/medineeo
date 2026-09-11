@@ -51,7 +51,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
-  CREATE TYPE inventory_type AS ENUM ('medicament','consumable','equipment','dental_material');
+  CREATE TYPE inventory_type AS ENUM ('medicament','consumable','equipment');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN

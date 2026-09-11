@@ -4,8 +4,8 @@
 -- ============================================================================
 --
 -- This migration assumes the tables introduced in
--- 0002_clinical_tables.sql (clinical_notes, dental_chart_entries,
--- treatment_plans, treatment_plan_items, treatments, quotes, prescriptions,
+-- 0002_clinical_tables.sql (clinical_notes, treatment_plans,
+-- treatment_plan_items, treatments, quotes, prescriptions,
 -- insurance_providers/policies/claims) are already in place, alongside the
 -- core tables from 0001 (clinics, profiles, patients, appointments, invoices,
 -- invoice_items, payments, inventory_items, inventory_transactions).

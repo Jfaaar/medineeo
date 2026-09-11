@@ -1,6 +1,5 @@
-// Clinical bundle: notes + dental chart entries.
+// Clinical notes.
 const notesRepo = require('../repositories/clinicalNotesRepository');
-const chartRepo = require('../repositories/dentalChartRepository');
 const { ApiError } = require('../middleware/errorHandler');
 
 function requireClinic(req) {
@@ -45,31 +44,6 @@ async function deleteNote(req, id) {
   await notesRepo.remove(req.db, id);
 }
 
-// Dental chart
-function listChartEntries(req, query) {
-  return chartRepo.list(req.db, query);
-}
-
-async function getChartEntry(req, id) {
-  const e = await chartRepo.get(req.db, id);
-  if (!e) throw new ApiError(404, 'NOT_FOUND', 'Dental chart entry not found');
-  return e;
-}
-
-function createChartEntry(req, input) {
-  return chartRepo.create(req.db, input, requireClinic(req));
-}
-
-async function updateChartEntry(req, id, patch) {
-  const existing = await chartRepo.get(req.db, id);
-  if (!existing) throw new ApiError(404, 'NOT_FOUND', 'Dental chart entry not found');
-  return chartRepo.update(req.db, id, patch);
-}
-
-async function deleteChartEntry(req, id) {
-  await chartRepo.remove(req.db, id);
-}
-
 module.exports = {
   listNotes,
   getNote,
@@ -77,9 +51,4 @@ module.exports = {
   updateNote,
   signNote,
   deleteNote,
-  listChartEntries,
-  getChartEntry,
-  createChartEntry,
-  updateChartEntry,
-  deleteChartEntry,
 };

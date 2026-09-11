@@ -83,7 +83,7 @@ Apply the migrations in order (idempotent):
 1. [supabase/migrations/0001_core_extensions_and_helpers.sql](supabase/migrations/0001_core_extensions_and_helpers.sql) — extensions, enums, RLS helper functions (`is_super_admin()`, `current_clinic_id()`, `set_updated_at()`).
 2. [supabase/migrations/0002_clinical_tables.sql](supabase/migrations/0002_clinical_tables.sql) — every domain table:
 
-   `patients`, `patient_medical_history`, `rooms`, `appointments`, `appointment_logs`, `clinical_notes`, `dental_chart_entries`, `treatment_plans`, `treatments`, `quotes`, `insurance_providers`, `insurance_policies`, `insurance_claims`, `invoices`, `invoice_items`, `payments`, `prescriptions`, `prescription_items`, `suppliers`, `inventory_items`, `inventory_transactions`, `purchase_orders`, `purchase_order_items`, `documents`, `notification_templates`, `notifications`, `clinic_settings`, `audit_logs`.
+   `patients`, `patient_medical_history`, `rooms`, `appointments`, `appointment_logs`, `clinical_notes`, `treatment_plans`, `treatments`, `quotes`, `insurance_providers`, `insurance_policies`, `insurance_claims`, `invoices`, `invoice_items`, `payments`, `prescriptions`, `prescription_items`, `suppliers`, `inventory_items`, `inventory_transactions`, `purchase_orders`, `purchase_order_items`, `documents`, `notification_templates`, `notifications`, `clinic_settings`, `audit_logs`.
 
 3. [supabase/migrations/0003_rls_policies.sql](supabase/migrations/0003_rls_policies.sql) — generates SELECT/INSERT/UPDATE/DELETE policies for every tenant-scoped table; `audit_logs` is append-only; `insurance_providers` and `notification_templates` allow reading global presets.
 4. [supabase/migrations/0004_storage_buckets.sql](supabase/migrations/0004_storage_buckets.sql) — creates the private `medical` storage bucket and tenant-scoped object policies. Path convention: `{clinic_id}/{patient_id}/{document_id}.{ext}`.
@@ -182,7 +182,7 @@ Each module follows the same recipe: route → page → service → Supabase tab
 - Pull from: `patients`, `patient_medical_history`, `clinical_notes`, `treatments`, `appointments`, `invoices`, `insurance_policies`, `documents`.
 - Duplicate detection on save: query for `phone = ? OR email = ?` and warn before insert.
 
-### 3.2 Clinical notes + dental chart
+### 3.2 Clinical notes
 
 - `<ClinicalNoteEditor>` writes to `clinical_notes`. Once `signed_at IS NOT NULL`, the editor goes read-only and the row is locked from updates by RLS:
 
@@ -193,7 +193,6 @@ Each module follows the same recipe: route → page → service → Supabase tab
   ```
 
   (Add this in `0005_clinical_locks.sql` when shipping.)
-- `<DentalChart>` renders the FDI grid against `dental_chart_entries`.
 
 ### 3.3 Treatment plans, quotes, prescriptions
 
@@ -453,13 +452,6 @@ export interface ClinicalNote {
   createdAt: string; updatedAt: string;
 }
 
-export interface DentalChartEntry {
-  id: string; clinicId: string; patientId: string;
-  tooth: string; surface?: string;
-  finding: string; notes?: string;
-  recordedAt: string; recordedBy?: string;
-}
-
 export interface TreatmentPlan {
   id: string; clinicId: string; patientId: string; doctorId?: string;
   title?: string; status: 'draft' | 'proposed' | 'accepted' | 'rejected' | 'completed' | 'canceled';
@@ -518,7 +510,6 @@ export interface AuditLog {
 ### Clinical + financial (Phase 3)
 - [ ] Patient profile with all tabs powered by Supabase
 - [ ] Clinical notes lock after signing
-- [ ] Dental chart (FDI) renders + persists
 - [ ] Treatment plan → invoice flow end-to-end
 - [ ] Partial payment + status auto-recompute
 - [ ] Insurance claims: submit → reimburse

@@ -7,9 +7,8 @@
 -- 3. Four new tables: vital_signs, problem_list, vaccinations,
 --    body_region_findings — each tenant-scoped with RLS mirroring 0003.
 --
--- Existing dental tables (dental_chart_entries) and treatment columns
--- (tooth/surface) remain untouched. Gating happens in the application layer
--- via a per-clinic enabled_specialties array.
+-- Gating happens in the application layer via a per-clinic
+-- enabled_specialties array.
 -- ============================================
 
 -- ─── Specialty config on clinic_settings ─────────────────────────────────────

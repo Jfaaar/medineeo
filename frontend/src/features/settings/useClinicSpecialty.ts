@@ -22,7 +22,7 @@ export interface ClinicSpecialtyState {
   has: (specialty: SpecialtyCode) => boolean;
   /** Per-`primary_specialty` layout profile — record tabs, chart, dashboard preset, templates. */
   profile: SpecialtyProfile;
-  /** @deprecated read `profile.primaryChart === 'dentalChart'` or `has('dental')` instead. */
+  /** @deprecated read `has('dental')` instead. */
   isDental: boolean;
   /** @deprecated read `has('general_practice')` instead. */
   isGeneralPractice: boolean;

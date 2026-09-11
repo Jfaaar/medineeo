@@ -1,6 +1,6 @@
-# DentFlow — Dental Clinic Management System
+# DentFlow — Clinic Management System
 
-> Multi-tenant SaaS for dental clinics: patient records, scheduling, clinical tracking, radiology, inventory, prescriptions, and invoicing. Mobile-first, multilingual (EN / FR / ES / IT / AR with RTL), light & dark mode.
+> Multi-tenant SaaS for clinics: patient records, scheduling, clinical tracking, radiology, inventory, prescriptions, and invoicing. Mobile-first, multilingual (EN / FR / ES / IT / AR with RTL), light & dark mode.
 
 ---
 
@@ -82,7 +82,7 @@ Core entities and the things easy to miss:
 - **`Patient`** — includes `medicalHistory` (allergies / conditions / medications), `insuranceProvider` (CNSS / CNOPS — Morocco-focused), `status: active | archived`.
 - **`Appointment`** — denormalized `patientName` for MVP display, `status: confirmed | pending | canceled | completed`.
 - **`Invoice`** — `amount`, `paidAmount`, `payments[]`, status `paid | unpaid | partial`. (The old documentation said paid/unpaid only — partial payments are now supported.)
-- **`Treatment`** — `tooth`, `surface`, `status: planned | completed`, `materialsUsed[]` linking to inventory.
+- **`Treatment`** — `status: planned | completed`, `materialsUsed[]` linking to inventory.
 - **`Quote`** — embedded treatments, `status: draft | accepted | rejected`.
 - **`InventoryItem`** — discriminated by `type` (medicament / consumable / equipment); medicament-specific fields (`form`, `expiryDate`) and equipment-specific fields (`serialNumber`, `lastMaintenance`) live on the same interface.
 - **`Prescription`** — array of `PrescriptionItem` with denormalized `medicamentName`.
@@ -212,5 +212,4 @@ These are real bugs / drifts surfaced while writing this doc — fixing them is 
 
 - **Clinic** — top-level tenant. All non-super-admin data is scoped by `clinic_id`.
 - **Backoffice** — the super-admin UI ([features/backoffice/](features/backoffice/)) for managing tenants. Distinct from a clinic's own admin panel.
-- **Tooth notation** — `Treatment.tooth` uses two-digit FDI (e.g. `11`, `21`).
 - **CNSS / CNOPS** — Moroccan public health insurance providers, surfaced in `Patient.insuranceProvider`.

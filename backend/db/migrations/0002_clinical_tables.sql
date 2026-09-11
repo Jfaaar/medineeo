@@ -120,19 +120,6 @@ CREATE INDEX IF NOT EXISTS idx_notes_patient ON clinical_notes(patient_id, creat
 CREATE TRIGGER trg_notes_updated BEFORE UPDATE ON clinical_notes
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-CREATE TABLE IF NOT EXISTS dental_chart_entries (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  clinic_id UUID NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
-  patient_id UUID NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
-  tooth TEXT NOT NULL,             -- FDI: '11','21', etc.
-  surface TEXT,                    -- 'mesial','distal','occlusal','buccal','lingual'
-  finding TEXT NOT NULL,           -- 'caries','restoration','missing', ...
-  notes TEXT,
-  recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  recorded_by UUID REFERENCES auth.users(id) ON DELETE SET NULL
-);
-CREATE INDEX IF NOT EXISTS idx_chart_patient ON dental_chart_entries(patient_id);
-
 -- ─── Treatment plans + treatments ────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS treatment_plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -159,8 +146,6 @@ CREATE TABLE IF NOT EXISTS treatments (
   plan_id UUID REFERENCES treatment_plans(id) ON DELETE SET NULL,
   appointment_id UUID REFERENCES appointments(id) ON DELETE SET NULL,
   doctor_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
-  tooth TEXT,
-  surface TEXT,
   description TEXT NOT NULL,
   price NUMERIC(12,2) NOT NULL DEFAULT 0,
   status treatment_status NOT NULL DEFAULT 'planned',

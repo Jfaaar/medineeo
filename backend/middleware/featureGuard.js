@@ -1,7 +1,7 @@
 // Specialty / feature gate. Use after authenticateToken on any route whose
 // availability depends on the clinic's enabled features.
 //
-//   router.use('/dental-chart', requireFeature('dentalChart'));
+//   router.use('/vaccinations', requireFeature('vaccinations'));
 //
 // Returns 403 with a structured envelope if the feature is disabled for the
 // current clinic. The check consults clinic_feature_overrides first, then

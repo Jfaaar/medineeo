@@ -32,7 +32,7 @@ export interface ProtectedRouteProps {
 /**
  * Single Outlet-based gate for auth + role + permission + feature checks.
  *
- *   <Route element={<ProtectedRoute roles={['doctor']} feature="dentalChart" />}>
+ *   <Route element={<ProtectedRoute roles={['doctor']} feature="vaccinations" />}>
  *     <Route path="/foo" element={<Foo />} />
  *   </Route>
  *

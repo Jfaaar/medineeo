@@ -3,9 +3,6 @@ const {
   clinicalNoteCreateSchema,
   clinicalNoteUpdateSchema,
   clinicalNotesListQuerySchema,
-  dentalChartCreateSchema,
-  dentalChartUpdateSchema,
-  dentalChartListQuerySchema,
 } = require('../validation/clinical');
 const { idParamSchema } = require('../validation/common');
 const { ApiError } = require('../middleware/errorHandler');
@@ -46,30 +43,6 @@ async function deleteNote(req, res) {
   res.status(204).end();
 }
 
-// Dental chart
-async function listChartEntries(req, res) {
-  const query = parseOrThrow(dentalChartListQuerySchema, req.query, 'query');
-  res.json({ data: await service.listChartEntries(req, query) });
-}
-async function getChartEntry(req, res) {
-  const { id } = parseOrThrow(idParamSchema, req.params, 'params');
-  res.json({ data: await service.getChartEntry(req, id) });
-}
-async function createChartEntry(req, res) {
-  const input = parseOrThrow(dentalChartCreateSchema, req.body, 'body');
-  res.status(201).json({ data: await service.createChartEntry(req, input) });
-}
-async function updateChartEntry(req, res) {
-  const { id } = parseOrThrow(idParamSchema, req.params, 'params');
-  const patch = parseOrThrow(dentalChartUpdateSchema, req.body, 'body');
-  res.json({ data: await service.updateChartEntry(req, id, patch) });
-}
-async function deleteChartEntry(req, res) {
-  const { id } = parseOrThrow(idParamSchema, req.params, 'params');
-  await service.deleteChartEntry(req, id);
-  res.status(204).end();
-}
-
 module.exports = {
   listNotes,
   getNote,
@@ -77,9 +50,4 @@ module.exports = {
   updateNote,
   signNote,
   deleteNote,
-  listChartEntries,
-  getChartEntry,
-  createChartEntry,
-  updateChartEntry,
-  deleteChartEntry,
 };

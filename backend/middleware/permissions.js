@@ -8,7 +8,7 @@
 //
 //   requireEffectivePermission(...perms)
 //       Fine-grained, dotted-namespace permissions shared with the frontend
-//       (clinical.sign, dentalChart.update, payments.refund, …). The static
+//       (clinical.sign, treatments.accept, payments.refund, …). The static
 //       ROLE_PERMISSIONS matrix in lib/rolePermissions.js is the default,
 //       but per-clinic role_permission_overrides take precedence.
 //       Use this on new clinical/admin routes.

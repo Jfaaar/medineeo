@@ -7,11 +7,10 @@
 // appointment-type seed list, and which template IDs to use for prescriptions
 // / quotes / referrals / certificates.
 //
-// Phase 0 seeds the structure with two real profiles (general_practice +
-// dental — matching today's behavior) and clones general_practice for the
-// other nine specialties. Each pack phase fills in its own specialty's
-// profile (record tabs, primaryChart, dashboardPreset, appointmentTypes,
-// templates) per the SPECIALTY_FEATURES.md §4 spec.
+// Phase 0 seeds the structure with one real profile (general_practice) and
+// clones it for every other specialty. Each pack phase fills in its own
+// specialty's profile (record tabs, primaryChart, dashboardPreset,
+// appointmentTypes, templates) per the SPECIALTY_FEATURES.md §4 spec.
 
 import type { FeatureKey } from '@/lib/features';
 import type { SpecialtyCode } from './api/settingsApi';
@@ -19,7 +18,6 @@ import type { SpecialtyCode } from './api/settingsApi';
 export type RecordTab = FeatureKey | 'overview' | 'billing' | 'documents';
 
 export type PrimaryChart =
-  | 'dentalChart'
   | 'bodyRegionChart'
   | 'growthCharts'
   | 'eyeExam'
@@ -74,46 +72,13 @@ const GP_PROFILE: SpecialtyProfile = {
   templates: GENERIC_TEMPLATES,
 };
 
-const DENTAL_PROFILE: SpecialtyProfile = {
-  code: 'dental',
-  recordTabs: [
-    'overview',
-    'dentalChart',
-    'treatments',
-    'clinicalNotes',
-    'documents',
-    'quotes',
-    'billing',
-  ],
-  primaryChart: 'dentalChart',
-  dashboardPreset: 'dental',
-  appointmentTypes: [
-    'exam',
-    'cleaning',
-    'filling',
-    'rootCanal',
-    'extraction',
-    'crownBridge',
-    'implant',
-    'orthoAdjustment',
-    'whitening',
-    'emergency',
-  ],
-  templates: {
-    prescription: 'dental',
-    quote: 'dentalEstimate',
-    referral: 'dental',
-    certificate: 'generic',
-  },
-};
-
 function cloneFromGp(code: SpecialtyCode): SpecialtyProfile {
   return { ...GP_PROFILE, code };
 }
 
 export const SPECIALTY_PROFILES: Record<SpecialtyCode, SpecialtyProfile> = {
   general_practice: GP_PROFILE,
-  dental: DENTAL_PROFILE,
+  dental: cloneFromGp('dental'),
   pediatrics: cloneFromGp('pediatrics'),
   gynecology: cloneFromGp('gynecology'),
   cardiology: cloneFromGp('cardiology'),

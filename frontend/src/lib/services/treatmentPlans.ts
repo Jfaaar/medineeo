@@ -20,8 +20,6 @@ interface BackendPaged {
 export interface AddItemInput {
   description: string;
   price: number;
-  tooth?: string;
-  surface?: string;
 }
 
 export interface ConvertToAppointmentsInput {

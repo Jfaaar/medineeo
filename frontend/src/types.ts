@@ -106,9 +106,7 @@ export interface Treatment {
   id: string;
   patientId: string;
   date: string;
-  tooth?: string; // 11, 21, etc.
-  surface?: string; // e.g., "Mesial", "Distal", "Occlusal"
-  description: string; // e.g., "Composite Filling"
+  description: string; // e.g., "Physical therapy session"
   price: number;
   status: 'planned' | 'completed';
   materialsUsed?: ConsumedMaterial[]; // Inventory items consumed
@@ -181,7 +179,9 @@ export interface InventoryTransaction {
 }
 
 export interface PrescriptionItem {
-  medicamentId: string;
+  // Only set when picked from the clinic's own stocked inventory (enables
+  // stock deduction on save). Catalog-sourced picks leave this unset.
+  medicamentId?: string;
   medicamentName: string; // Denormalized for display
   dosage: string; // e.g., "500mg"
   frequency: string; // e.g., "2 times a day"
@@ -195,6 +195,45 @@ export interface Prescription {
   date: string;
   items: PrescriptionItem[];
   notes?: string;
+}
+
+export type CertificateType = 'sick_leave' | 'fitness' | 'school_work' | 'travel' | 'other';
+
+export interface Certificate {
+  id: string;
+  clinicId?: string;
+  patientId: string;
+  patientName?: string; // denormalized for the clinic-wide certificates list
+  doctorId?: string;
+  type: CertificateType;
+  reason?: string;
+  startDate?: string; // ISO date
+  endDate?: string; // ISO date
+  restDays?: number;
+  content?: string; // the drafted/edited certificate body text, printed verbatim
+  notes?: string;
+  signedAt?: string; // locked when set
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type ReferralUrgency = 'routine' | 'urgent';
+
+export interface Referral {
+  id: string;
+  clinicId?: string;
+  patientId: string;
+  patientName?: string; // denormalized for the clinic-wide referrals list
+  doctorId?: string;
+  recipientSpecialty: string; // free text: 'Cardiology', 'Emergency', ... — no fixed enum
+  recipientName?: string; // optional named doctor / facility
+  urgency: ReferralUrgency;
+  reason?: string;
+  content?: string; // the drafted/edited letter body, printed verbatim
+  notes?: string;
+  signedAt?: string; // locked when set
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type CalendarViewMode = 'month' | 'week' | 'day' | 'agenda';
@@ -228,18 +267,6 @@ export interface ClinicalNote {
   signedAt?: string; // locked when set
   createdAt: string;
   updatedAt: string;
-}
-
-export interface DentalChartEntry {
-  id: string;
-  clinicId: string;
-  patientId: string;
-  tooth: string;
-  surface?: string;
-  finding: string;
-  notes?: string;
-  recordedAt: string;
-  recordedBy?: string;
 }
 
 export interface TreatmentPlan {
@@ -327,8 +354,8 @@ export interface AuditLog {
 // ─── Phase 3 UI helper types (Agent D) ─────────────────────────────────────
 // These are auxiliary shapes consumed by features/clinical, features/treatments,
 // features/insurance, and features/prescriptions. They DO NOT replace the
-// canonical types above (ClinicalNote, DentalChartEntry, TreatmentPlan,
-// InsurancePolicy, InsuranceClaim) — those follow the Supabase migration schema.
+// canonical types above (ClinicalNote, TreatmentPlan, InsurancePolicy,
+// InsuranceClaim) — those follow the Supabase migration schema.
 
 export interface Vitals {
   bloodPressure?: string;
@@ -338,18 +365,6 @@ export interface Vitals {
   height?: number;
 }
 
-export type ToothCondition =
-  | 'healthy'
-  | 'caries'
-  | 'filling'
-  | 'crown'
-  | 'extraction'
-  | 'implant'
-  | 'rootCanal'
-  | 'missing'
-  | 'fracture'
-  | 'other';
-
 // Items on a treatment plan are stored in the `treatments` table
 // (linked via plan_id), so the shape mirrors a Treatment row.
 export interface TreatmentPlanItem {
@@ -357,8 +372,6 @@ export interface TreatmentPlanItem {
   planId?: string;
   patientId: string;
   description: string;
-  tooth?: string;
-  surface?: string;
   price: number;
   status: 'planned' | 'in_progress' | 'completed' | 'canceled';
   performedAt?: string;

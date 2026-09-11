@@ -43,7 +43,6 @@ function readSeededDefinitions() {
   const files = [
     'backend/db/migrations/0011_feature_access.sql',
     'backend/db/migrations/0012_core_feature_keys.sql',
-    'backend/db/migrations/0013_dental_pack_keys.sql',
   ];
   const defs = new Map();
   for (const rel of files) {

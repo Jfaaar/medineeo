@@ -31,7 +31,7 @@ DELETE FROM patients      WHERE external_ref LIKE 'SHOW-%';
 -- ─── Clinic identity ─────────────────────────────────────────────────────────
 
 UPDATE clinics
-   SET name    = 'Cabinet Dentaire Atlas',
+   SET name    = 'Cabinet Médical Atlas',
        phone   = '+212 5 22 47 18 90',
        address = '14, Boulevard d''Anfa — Casablanca'
  WHERE id = '00000000-0000-0000-0000-0000000000c1';
@@ -151,18 +151,18 @@ SELECT
   '00000000-0000-0000-0000-000000000001'
 FROM (
   VALUES
-    (1,  4,  'Détartrage',     480,  'completed',   'Détartrage complet, RAS'),          -- 08:00
-    (2,  11, 'Contrôle',       510,  'completed',   'Contrôle post-opératoire'),         -- 08:30
-    (3,  22, 'Composite',      540,  'completed',   'Obturation 26 — composite A2'),     -- 09:00
-    (4,  7,  'Consultation',   570,  'completed',   'Douleur secteur 4'),                -- 09:30
-    (5,  35, 'Dévitalisation', 600,  'in_progress', 'Traitement canalaire 46'),          -- 10:00
-    (6,  2,  'Consultation',   660,  'confirmed',   'Première visite'),                  -- 11:00
-    (7,  19, 'Extraction',     690,  'confirmed',   'Extraction 38 incluse'),            -- 11:30
-    (8,  28, 'Détartrage',     840,  'confirmed',   NULL),                               -- 14:00
-    (9,  13, 'Pose couronne',  870,  'confirmed',   'Essayage couronne céramique'),      -- 14:30
-    (10, 40, 'Contrôle',       900,  'pending',     NULL),                               -- 15:00
-    (11, 26, 'Blanchiment',    930,  'pending',     'Séance 1/2'),                       -- 15:30
-    (12, 9,  'Urgence',        1020, 'confirmed',   'Douleur aiguë — créneau réservé')   -- 17:00
+    (1,  4,  'Consultation',      480,  'completed',   'Consultation de routine, RAS'),     -- 08:00
+    (2,  11, 'Contrôle',          510,  'completed',   'Contrôle post-traitement'),         -- 08:30
+    (3,  22, 'Bilan',             540,  'completed',   'Bilan de santé annuel'),            -- 09:00
+    (4,  7,  'Consultation',      570,  'completed',   'Douleur abdominale'),               -- 09:30
+    (5,  35, 'Suivi chronique',   600,  'in_progress', 'Suivi hypertension'),               -- 10:00
+    (6,  2,  'Consultation',      660,  'confirmed',   'Première visite'),                  -- 11:00
+    (7,  19, 'Petite chirurgie',  690,  'confirmed',   'Excision kyste sébacé'),            -- 11:30
+    (8,  28, 'Consultation',      840,  'confirmed',   NULL),                               -- 14:00
+    (9,  13, 'Vaccination',       870,  'confirmed',   'Rappel vaccinal'),                  -- 14:30
+    (10, 40, 'Contrôle',          900,  'pending',     NULL),                               -- 15:00
+    (11, 26, 'Analyse',           930,  'pending',     'Prélèvement sanguin'),              -- 15:30
+    (12, 9,  'Urgence',           1020, 'confirmed',   'Douleur aiguë — créneau réservé')   -- 17:00
 ) AS t(i, pat, kind, slot_min, status, note);
 
 -- (b) Past 10 weeks — completed visits, weekdays only, 6–9 slots a day.
@@ -178,7 +178,7 @@ SELECT
   '00000000-0000-0000-0000-000000000002',
   CASE WHEN s % 2 = 0 THEN '00000000-0000-0000-0000-bd0000000001'::uuid
                       ELSE '00000000-0000-0000-0000-bd0000000002'::uuid END,
-  (ARRAY['Détartrage','Consultation','Composite','Contrôle','Dévitalisation','Extraction','Pose couronne','Blanchiment'])[(d * 3 + s) % 8 + 1],
+  (ARRAY['Consultation','Contrôle','Bilan','Vaccination','Suivi chronique','Petite chirurgie','Analyse','Urgence'])[(d * 3 + s) % 8 + 1],
   ts,
   ts + INTERVAL '30 minutes',
   'completed',
@@ -209,7 +209,7 @@ SELECT
   '00000000-0000-0000-0000-000000000002',
   CASE WHEN s % 2 = 0 THEN '00000000-0000-0000-0000-bd0000000001'::uuid
                       ELSE '00000000-0000-0000-0000-bd0000000002'::uuid END,
-  (ARRAY['Détartrage','Consultation','Composite','Contrôle','Pose couronne','Implant'])[(d * 2 + s) % 6 + 1],
+  (ARRAY['Consultation','Contrôle','Bilan','Vaccination','Suivi chronique','Analyse'])[(d * 2 + s) % 6 + 1],
   ts,
   ts + INTERVAL '30 minutes',
   CASE WHEN (d + s) % 4 = 0 THEN 'pending' ELSE 'confirmed' END::appointment_status,
@@ -250,15 +250,14 @@ FROM appointments a
 JOIN patients p ON p.id = a.patient_id AND p.external_ref LIKE 'SHOW-%'
 CROSS JOIN LATERAL (
   SELECT CASE a.appointment_type
-           WHEN 'Détartrage'     THEN 450
-           WHEN 'Consultation'   THEN 300
-           WHEN 'Composite'      THEN 700
-           WHEN 'Contrôle'       THEN 200
-           WHEN 'Dévitalisation' THEN 1500
-           WHEN 'Extraction'     THEN 800
-           WHEN 'Pose couronne'  THEN 2800
-           WHEN 'Blanchiment'    THEN 1800
-           WHEN 'Implant'        THEN 6500
+           WHEN 'Consultation'      THEN 300
+           WHEN 'Contrôle'          THEN 200
+           WHEN 'Bilan'             THEN 400
+           WHEN 'Vaccination'       THEN 150
+           WHEN 'Suivi chronique'   THEN 500
+           WHEN 'Petite chirurgie'  THEN 900
+           WHEN 'Analyse'           THEN 250
+           WHEN 'Urgence'           THEN 400
            ELSE 400
          END::numeric AS price
 ) AS pr
@@ -296,15 +295,15 @@ INSERT INTO inventory_items (
   cost_price, sell_price, expiry_date, batch_number, brand, location
 )
 VALUES
-  ('00000000-0000-0000-0000-bf0000000010', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Anesthésique Articaïne 4%',  'medicament',      'anesthésie',   64,  20, 'cartouche', 8.5,  15,  CURRENT_DATE + 240, 'ART-4471', 'Septodont',   'Armoire A'),
-  ('00000000-0000-0000-0000-bf0000000011', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Composite resin A3',         'dental_material', 'restauration', 22,  10, 'seringue',  95,   180, CURRENT_DATE + 400, 'CR-A3-88', '3M Filtek',   'Armoire B'),
-  ('00000000-0000-0000-0000-bf0000000012', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Ciment verre ionomère',      'dental_material', 'restauration', 18,  8,  'boîte',     140,  260, CURRENT_DATE + 310, 'GIC-231',  'GC Fuji',     'Armoire B'),
-  ('00000000-0000-0000-0000-bf0000000013', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Limes endodontiques K',      'consumable',      'endodontie',   6,   15, 'set',       210,  0,   NULL,               'ENDO-K12', 'Dentsply',    'Tiroir 3'),
-  ('00000000-0000-0000-0000-bf0000000014', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000001', 'Masques chirurgicaux',       'consumable',      'hygiène',      340, 100,'boîte',     35,   0,   CURRENT_DATE + 500, 'MSK-9901', 'MedLine',     'Réserve'),
-  ('00000000-0000-0000-0000-bf0000000015', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000001', 'Ibuprofène 400mg',           'medicament',      'analgésique',  85,  30, 'boîte',     22,   40,  CURRENT_DATE + 180, 'IBU-400',  'Cooper Pharma','Armoire A'),
-  ('00000000-0000-0000-0000-bf0000000016', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Fraises diamantées',         'consumable',      'rotatif',      48,  20, 'unité',     18,   0,   NULL,               'FRZ-D22',  'Komet',       'Tiroir 1'),
-  ('00000000-0000-0000-0000-bf0000000017', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Digue en caoutchouc',        'consumable',      'isolation',    12,  10, 'boîte',     90,   0,   CURRENT_DATE + 95,  'DAM-556',  'Coltène',     'Tiroir 2'),
-  ('00000000-0000-0000-0000-bf0000000018', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Fauteuil dentaire A-dec',    'equipment',       'matériel',     2,   1,  'unité',     0,    0,   NULL,               NULL,       'A-dec 500',   'Salle 1')
+  ('00000000-0000-0000-0000-bf0000000010', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Anesthésique local (lidocaïne 2%)', 'medicament', 'anesthésie',   64,  20, 'ampoule',   8.5,  15,  CURRENT_DATE + 240, 'LIDO-4471', 'Septodont',  'Armoire A'),
+  ('00000000-0000-0000-0000-bf0000000011', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Seringues jetables 5ml',            'consumable', 'injection',    22,  10, 'boîte',     95,   180, CURRENT_DATE + 400, 'SYR-88',    'BD',         'Armoire B'),
+  ('00000000-0000-0000-0000-bf0000000012', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Compresses stériles',               'consumable', 'pansement',    18,  8,  'boîte',     140,  260, CURRENT_DATE + 310, 'GAZ-231',   'MedLine',    'Armoire B'),
+  ('00000000-0000-0000-0000-bf0000000013', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Kits de suture',                    'consumable', 'petite-chirurgie', 6,   15, 'set',   210,  0,   NULL,               'SUT-K12',   'Ethicon',    'Tiroir 3'),
+  ('00000000-0000-0000-0000-bf0000000014', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000001', 'Masques chirurgicaux',              'consumable', 'hygiène',      340, 100,'boîte',     35,   0,   CURRENT_DATE + 500, 'MSK-9901',  'MedLine',    'Réserve'),
+  ('00000000-0000-0000-0000-bf0000000015', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000001', 'Ibuprofène 400mg',                  'medicament', 'analgésique',  85,  30, 'boîte',     22,   40,  CURRENT_DATE + 180, 'IBU-400',   'Cooper Pharma','Armoire A'),
+  ('00000000-0000-0000-0000-bf0000000016', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Gants d''examen (nitrile)',         'consumable', 'hygiène',      48,  20, 'boîte',     18,   0,   NULL,               'GLV-D22',   'Ansell',     'Tiroir 1'),
+  ('00000000-0000-0000-0000-bf0000000017', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Alcool antiseptique',               'consumable', 'hygiène',      12,  10, 'flacon',    90,   0,   CURRENT_DATE + 95,  'ALC-556',   'Gifrer',     'Tiroir 2'),
+  ('00000000-0000-0000-0000-bf0000000018', '00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-be0000000002', 'Tensiomètre électronique',          'equipment',  'matériel',     2,   1,  'unité',     0,    0,   NULL,               NULL,        'Omron',      'Salle 1')
 ON CONFLICT (id) DO UPDATE SET
   stock = EXCLUDED.stock, min_stock = EXCLUDED.min_stock, name = EXCLUDED.name;
 
@@ -316,7 +315,7 @@ UPDATE inventory_items SET name = 'Amoxicilline 500mg', category = 'antibiotique
        stock = 120, min_stock = 40  WHERE id = '00000000-0000-0000-0000-bf0000000001';
 UPDATE inventory_items SET name = 'Paracétamol 1g', category = 'analgésique',
        stock = 200, min_stock = 50  WHERE id = '00000000-0000-0000-0000-bf0000000002';
-UPDATE inventory_items SET name = 'Composite resin A2', category = 'restauration',
+UPDATE inventory_items SET name = 'Kit de suture (absorbable)', category = 'petite-chirurgie',
        stock = 15,  min_stock = 6   WHERE id = '00000000-0000-0000-0000-bf0000000004';
 
 -- ─── Hero patient: Yasmine Alaoui (SHOW-008) ─────────────────────────────────
@@ -335,19 +334,19 @@ SELECT
   v.sys, v.dia, v.hr, v.temp, 16, v.spo2, 62.5, 168, v.pain, v.note
 FROM (
   VALUES
-    (0,   118, 78, 72, 36.6, 98, 2, 'Constantes stables avant soin'),
-    (34,  122, 80, 76, 36.8, 97, 4, 'Douleur signalée secteur 2'),
+    (0,   118, 78, 72, 36.6, 98, 2, 'Constantes stables avant consultation'),
+    (34,  122, 80, 76, 36.8, 97, 4, 'Douleur signalée — suivi rapproché'),
     (96,  120, 79, 70, 36.5, 99, 0, 'Bilan annuel — RAS')
 ) AS v(days_ago, sys, dia, hr, temp, spo2, pain, note);
 
 INSERT INTO treatments (
-  clinic_id, patient_id, doctor_id, tooth, surface, description, price, status, performed_at
+  clinic_id, patient_id, doctor_id, description, price, status, performed_at
 )
 VALUES
-  ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-500000000008', '00000000-0000-0000-0000-000000000002', '26', 'O',  'Obturation composite',    700,  'completed',   now() - INTERVAL '34 days'),
-  ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-500000000008', '00000000-0000-0000-0000-000000000002', '46', 'MOD','Traitement canalaire',    1500, 'completed',   now() - INTERVAL '96 days'),
-  ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-500000000008', '00000000-0000-0000-0000-000000000002', '46', NULL, 'Couronne céramo-métal',   2800, 'in_progress', now() - INTERVAL '6 days'),
-  ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-500000000008', '00000000-0000-0000-0000-000000000002', '38', NULL, 'Extraction dent de sagesse', 800, 'planned',  NULL);
+  ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-500000000008', '00000000-0000-0000-0000-000000000002', 'Bilan sanguin complet',        700,  'completed',   now() - INTERVAL '34 days'),
+  ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-500000000008', '00000000-0000-0000-0000-000000000002', 'Suivi tension artérielle',     1500, 'completed',   now() - INTERVAL '96 days'),
+  ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-500000000008', '00000000-0000-0000-0000-000000000002', 'Vaccination antigrippale',     2800, 'in_progress', now() - INTERVAL '6 days'),
+  ('00000000-0000-0000-0000-0000000000c1', '00000000-0000-0000-0000-500000000008', '00000000-0000-0000-0000-000000000002', 'Consultation de suivi',        800,  'planned',     NULL);
 
 INSERT INTO prescriptions (id, clinic_id, patient_id, doctor_id, notes, signed_at, created_at)
 VALUES (

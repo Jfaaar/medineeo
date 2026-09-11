@@ -14,11 +14,12 @@ export { treatmentsService } from './treatments';
 export { treatmentPlansService } from './treatmentPlans';
 export { quotesService } from './quotes';
 export { prescriptionsService } from './prescriptions';
+export { certificatesService } from './certificates';
+export { referralsService } from './referrals';
 export { inventoryService } from './inventory';
 export { inventoryTransactionsService } from './inventoryTransactions';
 export { suppliersService } from './suppliers';
 export { clinicalNotesService } from './clinicalNotes';
-export { dentalChartService } from './dentalChart';
 export { insuranceService } from './insurance';
 export { settingsService, type ClinicSettings } from './settings';
 

@@ -7,38 +7,20 @@ import { Treatment, InventoryItem, ConsumedMaterial } from '../../../types';
 import { useLanguage } from '../../../features/language/LanguageContext';
 import { Package, Plus, Trash2, Search } from 'lucide-react';
 import { api } from '../../../lib/api';
-import { useClinicSpecialty } from '../../settings/useClinicSpecialty';
-
-const BODY_REGION_OPTIONS = [
-  'head', 'neck', 'chest', 'abdomen', 'pelvis', 'back',
-  'upper_limb_left', 'upper_limb_right', 'lower_limb_left', 'lower_limb_right',
-];
 
 interface TreatmentFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: Omit<Treatment, 'id' | 'patientId'>) => void;
-  initialTooth?: string | null;
-  initialSurface?: string;
 }
 
 export const TreatmentFormModal: React.FC<TreatmentFormModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  initialTooth,
-  initialSurface
 }) => {
   const { t } = useLanguage();
-  const { profile } = useClinicSpecialty();
-  // Tooth/surface fields belong on a treatment plan only when this clinic's
-  // primary specialty is dental (its layout profile uses the odontogram).
-  // A clinic that merely has dental as a secondary specialty gets the
-  // generic body-region selector instead.
-  const isDental = profile.primaryChart === 'dentalChart';
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [tooth, setTooth] = useState('');
-  const [surface, setSurface] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [status, setStatus] = useState<'planned' | 'completed'>('completed');
@@ -51,27 +33,16 @@ export const TreatmentFormModal: React.FC<TreatmentFormModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-        if (initialTooth) {
-            setTooth(initialTooth);
-        } else {
-            setTooth('');
-        }
-        if (initialSurface) {
-            setSurface(initialSurface);
-            setDescription(`${initialSurface}: `); 
-        } else {
-            setSurface('');
-            setDescription('');
-        }
+        setDescription('');
         setMaterialsUsed([]);
-        
+
         // Fetch inventory for consumables selection
         api.inventory.list().then(items => {
             // Filter to show primarily consumables and medicaments
             setInventory(items.filter(i => i.type === 'consumable' || i.type === 'medicament'));
         });
     }
-  }, [isOpen, initialTooth, initialSurface]);
+  }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,8 +50,6 @@ export const TreatmentFormModal: React.FC<TreatmentFormModalProps> = ({
 
     onSubmit({
         date: new Date(date).toISOString(),
-        tooth: tooth || undefined,
-        surface: surface || undefined,
         description,
         price: parseFloat(price),
         status,
@@ -90,8 +59,6 @@ export const TreatmentFormModal: React.FC<TreatmentFormModalProps> = ({
     // Reset form
     setDescription('');
     setPrice('');
-    setTooth('');
-    setSurface('');
     setMaterialsUsed([]);
   };
 
@@ -164,32 +131,6 @@ export const TreatmentFormModal: React.FC<TreatmentFormModalProps> = ({
         </div>
         
         <div className="flex gap-4">
-            {isDental ? (
-                <div className="w-1/3">
-                    <Input
-                        label={t('tooth')}
-                        placeholder="e.g. 11"
-                        value={tooth}
-                        onChange={e => setTooth(e.target.value)}
-                    />
-                </div>
-            ) : (
-                <div className="w-1/3 space-y-1.5">
-                    <label className="block text-xs font-semibold text-surface-700 dark:text-surface-300 uppercase tracking-wider">
-                        Body region
-                    </label>
-                    <select
-                        value={tooth}
-                        onChange={(e) => setTooth(e.target.value)}
-                        className="w-full h-10 rounded-xl border border-surface-300 dark:border-surface-700 bg-white dark:bg-surface-900 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    >
-                        <option value="">—</option>
-                        {BODY_REGION_OPTIONS.map((r) => (
-                            <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>
-                        ))}
-                    </select>
-                </div>
-            )}
             <div className="flex-1">
                  <Input
                     label={t('price')}
@@ -202,15 +143,9 @@ export const TreatmentFormModal: React.FC<TreatmentFormModalProps> = ({
             </div>
         </div>
 
-        {isDental && surface && (
-            <div className="text-xs text-primary-600 bg-primary-50 px-3 py-2 rounded-lg font-medium border border-primary-100">
-                Selected Surface: {surface}
-            </div>
-        )}
-
-        <Input 
+        <Input
             label={t('actDescription')} 
-            placeholder="e.g. Composite Filling" 
+            placeholder="e.g. Physical therapy session" 
             value={description} 
             onChange={e => setDescription(e.target.value)} 
             autoFocus
